@@ -6,10 +6,10 @@ require('dotenv').config()
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 
-const postsRouter = require('./routes/posts.router')
+const challengesRouter = require('./routes/challenges.router')
 const authRouter = require('./routes/auth.router')
 
-app.use("/api/v1/posts", postsRouter)
+app.use("/api/v1/challenges", challengesRouter)
 app.use("/api/v1/auth", authRouter)
 
 const PORT = process.env.PORT || 5000
