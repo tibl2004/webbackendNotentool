@@ -1,19 +1,22 @@
-const express = require("express")
-const app = express()
+const express = require("express");
+const cors = require("cors");
+const app = express();
 
-require('dotenv').config()
+require('dotenv').config();
 
-app.use(express.urlencoded({extended: false}))
-app.use(express.json())
+app.use(cors()); // CORS-Middleware aktivieren
 
-const challengesRouter = require('./routes/challenges.router')
-const authRouter = require('./routes/auth.router')
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
-app.use("/api/v1/challenges", challengesRouter)
-app.use("/api/v1/auth", authRouter)
+const challengesRouter = require('./routes/challenges.router');
+const authRouter = require('./routes/auth.router');
 
-const PORT = process.env.PORT || 5000
+app.use("/api/v1/challenges", challengesRouter);
+app.use("/api/v1/auth", authRouter);
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log("Server is running....")
-})
+    console.log("Server is running....");
+});
