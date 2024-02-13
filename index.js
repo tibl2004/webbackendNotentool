@@ -15,7 +15,7 @@ const authRouter = require('./routes/auth.router');
 app.use("/api/v1/faecher", faecherRouter);
 app.use("/api/v1/auth", authRouter);
 
-const PORT = process.env.PORT || 3307; // Verwenden Sie einen anderen freien Port
+const PORT = process.env.PORT || 1111; // Verwenden Sie einen anderen freien Port
 
 app.listen(PORT, () => {
     console.log("Server is running....");
