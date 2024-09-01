@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { educationController, authenticateToken } = require('../controller/educationController');
+const { educationController, authenticateToken } = require('../controller/education.controller');
 
 // Lehrbetrieb Registrierung und Login
 router.post('/register', educationController.register);
