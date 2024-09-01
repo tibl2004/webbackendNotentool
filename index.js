@@ -4,19 +4,17 @@ const app = express();
 
 require('dotenv').config();
 
-app.use(cors()); // CORS-Middleware aktivieren
-
+app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-const faecherRouter = require('./routes/faecher.router');
-const authRouter = require('./routes/auth.router');
+const educationRouter = require('./routes/education.router');
 
-app.use("/api/v1/faecher", faecherRouter);
-app.use("/api/v1/auth", authRouter);
+app.use("/api/education", educationRouter);
 
-const PORT = process.env.PORT || 1111; // Verwenden Sie einen anderen freien Port
 
+
+const PORT = process.env.PORT || 3000; // Port 3000 wird verwendet, falls kein anderer Port angegeben ist
 app.listen(PORT, () => {
-    console.log("Server is running....");
+    console.log(`Server is running on port ${PORT}`);
 });
