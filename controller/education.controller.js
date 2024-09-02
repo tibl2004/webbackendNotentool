@@ -49,7 +49,7 @@ const educationController = {
                 return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
             }
 
-            const token = jwt.sign({ id: lehrbetrieb.id }, 'secretKey', { expiresIn: '1h' });
+            const token = jwt.sign({ id: lehrbetrieb.id, role: 'lehrbetrieb' }, 'secretKey', { expiresIn: '1h' });
 
             res.json({ message: "Login erfolgreich", token });
         } catch (error) {
@@ -95,11 +95,12 @@ const educationController = {
             const berufsbildner = rows[0];
 
             // Überprüfen, ob das Passwort übereinstimmt
-            if (berufsbildner.passwort !== passwort) {
+            const match = await bcrypt.compare(passwort, berufsbildner.passwort);
+            if (!match) {
                 return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
             }
 
-            const token = jwt.sign({ id: berufsbildner.id }, 'secretKey', { expiresIn: '1h' });
+            const token = jwt.sign({ id: berufsbildner.id, role: 'berufsbildner' }, 'secretKey', { expiresIn: '1h' });
 
             res.json({ message: "Login erfolgreich", token });
         } catch (error) {
@@ -108,7 +109,7 @@ const educationController = {
         }
     },
 
-    // Alle Lernenden des Berufsbildners abrufen
+    // Lernenden abrufen
     getLernende: async (req, res) => {
         try {
             const berufsbildnerId = req.user.id;
@@ -120,6 +121,7 @@ const educationController = {
         }
     },
 
+    // Lernende mit Fächern abrufen
     getLernendeMitFaecher: async (req, res) => {
         try {
             const berufsbildnerId = req.user.id;
@@ -140,25 +142,39 @@ const educationController = {
         }
     },
 
-    // Lernenden zu einem Berufsbildner hinzufügen
+    // Lernenden hinzufügen (Nur für Berufsbildner oder Admin)
     addLernender: async (req, res) => {
         try {
             const berufsbildnerId = req.user.id;
-            const { name } = req.body;
+            const { benutzername, passwort, name, vorname, beruf, berufsschule } = req.body;
+    
+            // Überprüfen, ob der Benutzername bereits vergeben ist
+            const [existingLernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
+            if (existingLernender.length > 0) {
+                return res.status(400).json({ error: "Benutzername bereits vergeben." });
+            }
+    
+            // Passwort verschlüsseln
+            const hashedPassword = await bcrypt.hash(passwort, 10);
+    
+            // SQL-Abfrage zum Einfügen eines neuen Lernenden
             const sql = `
-                INSERT INTO lernender (berufsbildner_id, name)
-                VALUES (?, ?)
+                INSERT INTO lernender (berufsbildner_id, benutzername, passwort, name, vorname, beruf, berufsschule)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
-            const values = [berufsbildnerId, name];
+            const values = [berufsbildnerId, benutzername, hashedPassword, name, vorname, beruf, berufsschule];
             await pool.query(sql, values);
+    
             res.status(201).json({ message: "Lernender erfolgreich hinzugefügt." });
         } catch (error) {
             console.error("Fehler beim Hinzufügen des Lernenden:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen des Lernenden." });
         }
     },
+    
 
-    // Fach zu einem Lernenden hinzufügen
+
+    // Fach hinzufügen (Nur für Berufsbildner)
     addFach: async (req, res) => {
         try {
             const { lernenderId } = req.params;
@@ -176,7 +192,7 @@ const educationController = {
         }
     },
 
-    // Note für ein Fach eines Lernenden hinzufügen
+    // Note hinzufügen (Für Lernende)
     addNote: async (req, res) => {
         try {
             const { fachId } = req.params;
@@ -194,7 +210,7 @@ const educationController = {
         }
     },
 
-    // Alle Fächer eines Lernenden abrufen
+    // Alle Fächer eines Lernenden abrufen (Für Lernende)
     getFaecher: async (req, res) => {
         try {
             const { lernenderId } = req.params;
@@ -206,7 +222,7 @@ const educationController = {
         }
     },
 
-    // Alle Noten eines Fachs abrufen
+    // Alle Noten eines Fachs abrufen (Für Lernende)
     getNoten: async (req, res) => {
         try {
             const { fachId } = req.params;
@@ -218,7 +234,7 @@ const educationController = {
         }
     },
 
-    // Alle Lehrbetriebe abrufen
+    // Alle Lehrbetriebe abrufen (Öffentlich)
     getAllLehrbetriebe: async (req, res) => {
         try {
             const [rows] = await pool.query("SELECT * FROM lehrbetrieb");
