@@ -1,5 +1,5 @@
 const express = require('express');
-const { educationController, authenticateToken } = require('../controllers/education.controller');
+const { educationController, authenticateToken } = require('../controller/education.controller');
 
 const router = express.Router();
 
