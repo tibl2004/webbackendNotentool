@@ -109,6 +109,19 @@ const educationController = {
         }
     },
 
+    // Alle Berufsbildner eines bestimmten Lehrbetriebs abrufen
+getBerufsbildnerByLehrbetrieb: async (req, res) => {
+    try {
+        const { lehrbetriebId } = req.params;
+        const [rows] = await pool.query("SELECT * FROM berufsbildner WHERE lehrbetrieb_id = ?", [lehrbetriebId]);
+        res.json({ data: rows });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Berufsbildner:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Berufsbildner." });
+    }
+},
+
+
     // Lernenden abrufen
     getLernende: async (req, res) => {
         try {

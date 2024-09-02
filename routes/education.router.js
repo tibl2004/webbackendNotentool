@@ -32,5 +32,7 @@ router.get('/noten/:fachId', authenticateToken, educationController.getNoten);
 
 // Alle Lehrbetriebe abrufen (keine Authentifizierung erforderlich)
 router.get('/lehrbetriebe', educationController.getAllLehrbetriebe);
+router.get('/lehrbetrieb/:lehrbetriebId/berufsbildner', educationController.getBerufsbildnerByLehrbetrieb);
+
 
 module.exports = router;
