@@ -6,12 +6,28 @@ const router = express.Router();
 // Route für das Abrufen aller Lehrbetriebe
 router.get('/lehrbetriebe', authenticateToken, educationController.getAllLehrbetriebe);
 
-// Weitere vorhandene Routen...
-router.post('/register', educationController.register);
-router.post('/login', educationController.login);
+// Route für das Registrieren des Lehrbetriebs
+router.post('/register', educationController.registerLehrbetrieb);
+
+// Route für das Login des Berufsbildners
+router.post('/login', educationController.loginBerufsbildner);
+
+// Route für das Abrufen aller Lernenden des Berufsbildners
 router.get('/lernende', authenticateToken, educationController.getLernende);
-router.post('/lernende/:lehrbetriebId', authenticateToken, educationController.addLernender);
-router.post('/fach/:lernenderId', authenticateToken, educationController.addFach);
-router.post('/note/:fachId', authenticateToken, educationController.addNote);
+
+// Route für das Abrufen aller Fächer eines Lernenden
+router.get('/lernende/:lernenderId/faecher', authenticateToken, educationController.getFaecherByLernenderId);
+
+// Route für das Abrufen aller Noten eines Faches
+router.get('/faecher/:fachId/noten', authenticateToken, educationController.getNotenByFachId);
+
+// Route für das Hinzufügen eines Lernenden
+router.post('/lernende', authenticateToken, educationController.addLernender);
+
+// Route für das Hinzufügen eines Fachs zu einem Lernenden
+router.post('/faecher/:lernenderId', authenticateToken, educationController.addFach);
+
+// Route für das Hinzufügen einer Note zu einem Fach
+router.post('/noten/:fachId', authenticateToken, educationController.addNote);
 
 module.exports = router;
