@@ -117,7 +117,18 @@ const educationController = {
             console.error("Fehler beim Hinzufügen der Note:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
         }
+    },
+    // Alle Lehrbetriebe abrufen
+getAllLehrbetriebe: async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT * FROM lehrbetrieb");
+        res.json({ data: rows });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
     }
+}
+
 };
 
 // Middleware zur Authentifizierung
