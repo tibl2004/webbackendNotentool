@@ -1,29 +1,60 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const pool = require('../database/index');
 
 const educationController = {
     // Lehrbetrieb registrieren
     registerLehrbetrieb: async (req, res) => {
         try {
-            const { firma, vorname, nachname, adresse, plz, ort, telefon, email } = req.body;
+            const { benutzername, passwort, firma, vorname, nachname, adresse, plz, ort, telefon, email } = req.body;
 
-            // Sicherstellen, dass die E-Mail einzigartig ist
-            const [existingLehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE email = ?", [email]);
+            // Sicherstellen, dass die E-Mail und der Benutzername einzigartig sind
+            const [existingLehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE email = ? OR benutzername = ?", [email, benutzername]);
             if (existingLehrbetrieb.length > 0) {
-                return res.status(400).json({ error: "E-Mail bereits vergeben." });
+                return res.status(400).json({ error: "E-Mail oder Benutzername bereits vergeben." });
             }
 
+            // Passwort verschlüsseln
+            const hashedPassword = await bcrypt.hash(passwort, 10);
+
             const sql = `
-                INSERT INTO lehrbetrieb (firma, vorname, nachname, adresse, plz, ort, telefon, email)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO lehrbetrieb (benutzername, passwort, firma, vorname, nachname, adresse, plz, ort, telefon, email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
-            const values = [firma, vorname, nachname, adresse, plz, ort, telefon, email];
+            const values = [benutzername, hashedPassword, firma, vorname, nachname, adresse, plz, ort, telefon, email];
             await pool.query(sql, values);
             res.status(201).json({ message: "Lehrbetrieb erfolgreich registriert." });
         } catch (error) {
             console.error("Fehler bei der Registrierung des Lehrbetriebs:", error);
             res.status(500).json({ error: "Fehler bei der Registrierung des Lehrbetriebs." });
+        }
+    },
+
+    // Login für Lehrbetrieb
+    loginLehrbetrieb: async (req, res) => {
+        try {
+            const { benutzername, passwort } = req.body;
+            const [rows] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
+
+            if (rows.length === 0) {
+                return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
+            }
+
+            const lehrbetrieb = rows[0];
+
+            // Überprüfen, ob das Passwort übereinstimmt
+            const match = await bcrypt.compare(passwort, lehrbetrieb.passwort);
+            if (!match) {
+                return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
+            }
+
+            const token = jwt.sign({ id: lehrbetrieb.id }, 'secretKey', { expiresIn: '1h' });
+
+            res.json({ message: "Login erfolgreich", token });
+        } catch (error) {
+            console.error("Fehler beim Login des Lehrbetriebs:", error);
+            res.status(500).json({ error: "Fehler beim Login des Lehrbetriebs." });
         }
     },
 

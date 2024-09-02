@@ -3,34 +3,31 @@ const { educationController, authenticateToken } = require('../controller/educat
 
 const router = express.Router();
 
-// Route für das Registrieren eines Lehrbetriebs
+// Lehrbetrieb registrieren
 router.post('/register-lehrbetrieb', educationController.registerLehrbetrieb);
 
-// Route für das Registrieren eines Berufsbildners
+// Lehrbetrieb Login
+router.post('/login-lehrbetrieb', educationController.loginLehrbetrieb);
+
+// Berufsbildner registrieren (mit Authentifizierung)
 router.post('/register-berufsbildner', authenticateToken, educationController.registerBerufsbildner);
 
-// Route für das Login eines Berufsbildners
+// Berufsbildner Login
 router.post('/login-berufsbildner', educationController.loginBerufsbildner);
 
-// Route für das Abrufen aller Lehrbetriebe
-router.get('/lehrbetriebe', authenticateToken, educationController.getAllLehrbetriebe);
-
-// Route für das Abrufen aller Lernenden des Berufsbildners
+// Lernende verwalten (mit Authentifizierung)
 router.get('/lernende', authenticateToken, educationController.getLernende);
-
-// Route für das Hinzufügen eines Lernenden
 router.post('/lernende', authenticateToken, educationController.addLernender);
 
-// Route für das Hinzufügen eines Fachs zu einem Lernenden
+// Fächer verwalten (mit Authentifizierung)
 router.post('/fach/:lernenderId', authenticateToken, educationController.addFach);
-
-// Route für das Hinzufügen einer Note zu einem Fach
-router.post('/note/:fachId', authenticateToken, educationController.addNote);
-
-// Route für das Abrufen aller Fächer eines Lernenden
 router.get('/faecher/:lernenderId', authenticateToken, educationController.getFaecher);
 
-// Route für das Abrufen aller Noten eines Fachs
+// Noten verwalten (mit Authentifizierung)
+router.post('/note/:fachId', authenticateToken, educationController.addNote);
 router.get('/noten/:fachId', authenticateToken, educationController.getNoten);
+
+// Alle Lehrbetriebe abrufen (keine Authentifizierung erforderlich)
+router.get('/lehrbetriebe', educationController.getAllLehrbetriebe);
 
 module.exports = router;
