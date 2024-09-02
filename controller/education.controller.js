@@ -3,22 +3,46 @@ const jwt = require('jsonwebtoken');
 const pool = require('../database/index');
 
 const educationController = {
-    // Registrierung eines Berufsbildners
+    // Lehrbetrieb registrieren
+    registerLehrbetrieb: async (req, res) => {
+        try {
+            const { firma, vorname, nachname, adresse, plz, ort, telefon, email } = req.body;
+
+            // Sicherstellen, dass die E-Mail einzigartig ist
+            const [existingLehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE email = ?", [email]);
+            if (existingLehrbetrieb.length > 0) {
+                return res.status(400).json({ error: "E-Mail bereits vergeben." });
+            }
+
+            const sql = `
+                INSERT INTO lehrbetrieb (firma, vorname, nachname, adresse, plz, ort, telefon, email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            const values = [firma, vorname, nachname, adresse, plz, ort, telefon, email];
+            await pool.query(sql, values);
+            res.status(201).json({ message: "Lehrbetrieb erfolgreich registriert." });
+        } catch (error) {
+            console.error("Fehler bei der Registrierung des Lehrbetriebs:", error);
+            res.status(500).json({ error: "Fehler bei der Registrierung des Lehrbetriebs." });
+        }
+    },
+
+    // Berufsbildner registrieren
     registerBerufsbildner: async (req, res) => {
         try {
-            const { lehrbetriebId, benutzername, passwort } = req.body;
+            const { lehrbetriebId, vorname, nachname, benutzername, passwort } = req.body;
 
             // Sicherstellen, dass der Benutzername einzigartig ist
-            const [existingUser] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
-            if (existingUser.length > 0) {
+            const [existingBerufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
+            if (existingBerufsbildner.length > 0) {
                 return res.status(400).json({ error: "Benutzername bereits vergeben." });
             }
 
             const sql = `
-                INSERT INTO berufsbildner (lehrbetrieb_id, benutzername, passwort)
-                VALUES (?, ?, ?)
+                INSERT INTO berufsbildner (lehrbetrieb_id, vorname, nachname, benutzername, passwort)
+                VALUES (?, ?, ?, ?, ?)
             `;
-            const values = [lehrbetriebId, benutzername, passwort];
+            const values = [lehrbetriebId, vorname, nachname, benutzername, passwort];
             await pool.query(sql, values);
             res.status(201).json({ message: "Berufsbildner erfolgreich registriert." });
         } catch (error) {
@@ -27,7 +51,7 @@ const educationController = {
         }
     },
 
-    // Login eines Berufsbildners
+    // Login für Berufsbildner
     loginBerufsbildner: async (req, res) => {
         try {
             const { benutzername, passwort } = req.body;
@@ -65,11 +89,11 @@ const educationController = {
         }
     },
 
-    // Lernenden hinzufügen
+    // Lernenden zu einem Berufsbildner hinzufügen
     addLernender: async (req, res) => {
         try {
-            const { name } = req.body;
             const berufsbildnerId = req.user.id;
+            const { name } = req.body;
             const sql = `
                 INSERT INTO lernender (berufsbildner_id, name)
                 VALUES (?, ?)
@@ -83,19 +107,25 @@ const educationController = {
         }
     },
 
-    // Fächer eines Lernenden abrufen
-    getFächer: async (req, res) => {
+    // Fach zu einem Lernenden hinzufügen
+    addFach: async (req, res) => {
         try {
             const { lernenderId } = req.params;
-            const [rows] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernenderId]);
-            res.json({ data: rows });
+            const { fachName } = req.body;
+            const sql = `
+                INSERT INTO fach (lernender_id, name)
+                VALUES (?, ?)
+            `;
+            const values = [lernenderId, fachName];
+            await pool.query(sql, values);
+            res.status(201).json({ message: "Fach erfolgreich hinzugefügt." });
         } catch (error) {
-            console.error("Fehler beim Abrufen der Fächer:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
+            console.error("Fehler beim Hinzufügen des Fachs:", error);
+            res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
         }
     },
 
-    // Noten zu einem Fach hinzufügen
+    // Note für ein Fach eines Lernenden hinzufügen
     addNote: async (req, res) => {
         try {
             const { fachId } = req.params;
@@ -110,6 +140,41 @@ const educationController = {
         } catch (error) {
             console.error("Fehler beim Hinzufügen der Note:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+        }
+    },
+
+    // Alle Fächer eines Lernenden abrufen
+    getFaecher: async (req, res) => {
+        try {
+            const { lernenderId } = req.params;
+            const [rows] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernenderId]);
+            res.json({ data: rows });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Fächer:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
+        }
+    },
+
+    // Alle Noten eines Fachs abrufen
+    getNoten: async (req, res) => {
+        try {
+            const { fachId } = req.params;
+            const [rows] = await pool.query("SELECT * FROM note WHERE fach_id = ?", [fachId]);
+            res.json({ data: rows });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Noten:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Noten." });
+        }
+    },
+
+    // Alle Lehrbetriebe abrufen
+    getAllLehrbetriebe: async (req, res) => {
+        try {
+            const [rows] = await pool.query("SELECT * FROM lehrbetrieb");
+            res.json({ data: rows });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
         }
     }
 };
