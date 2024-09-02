@@ -120,6 +120,26 @@ const educationController = {
         }
     },
 
+    getLernendeMitFaecher: async (req, res) => {
+        try {
+            const berufsbildnerId = req.user.id;
+            const [lernende] = await pool.query("SELECT * FROM lernender WHERE berufsbildner_id = ?", [berufsbildnerId]);
+
+            const lernendeMitFaecher = await Promise.all(lernende.map(async (lernender) => {
+                const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernender.id]);
+                return {
+                    ...lernender,
+                    faecher
+                };
+            }));
+
+            res.json({ data: lernendeMitFaecher });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Lernenden mit Fächern:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Lernenden mit Fächern." });
+        }
+    },
+
     // Lernenden zu einem Berufsbildner hinzufügen
     addLernender: async (req, res) => {
         try {
