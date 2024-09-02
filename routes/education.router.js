@@ -19,6 +19,9 @@ router.post('/login-berufsbildner', educationController.loginBerufsbildner);
 router.get('/lernende', authenticateToken, educationController.getLernende);
 router.post('/lernende', authenticateToken, educationController.addLernender);
 
+// Alle Lernenden eines Berufsbildners mit Fächern abrufen (mit Authentifizierung)
+router.get('/lernende-mit-faecher', authenticateToken, educationController.getLernendeMitFaecher);
+
 // Fächer verwalten (mit Authentifizierung)
 router.post('/fach/:lernenderId', authenticateToken, educationController.addFach);
 router.get('/faecher/:lernenderId', authenticateToken, educationController.getFaecher);
