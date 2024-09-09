@@ -253,6 +253,34 @@ const educationController = {
             res.status(500).json({ error: "Fehler beim Abrufen der Noten." });
         }
     },
+
+    // Alle Lehrbetriebe abrufen (nur für Admins)
+    getAllLehrbetriebe: async (req, res) => {
+        try {
+            const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
+            res.json({ data: lehrbetriebe });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
+        }
+    },
+
+    // Eigenen Lehrbetrieb abrufen (nur für Lehrbetriebe)
+    getOwnLehrbetrieb: async (req, res) => {
+        try {
+            const lehrbetriebId = req.user.id;
+            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE id = ?", [lehrbetriebId]);
+
+            if (lehrbetrieb.length === 0) {
+                return res.status(404).json({ error: "Lehrbetrieb nicht gefunden." });
+            }
+
+            res.json({ data: lehrbetrieb[0] });
+        } catch (error) {
+            console.error("Fehler beim Abrufen des Lehrbetriebs:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen des Lehrbetriebs." });
+        }
+    },
 };
 
 // Middleware zum Überprüfen des Tokens
@@ -269,4 +297,14 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-module.exports = { educationController, authenticateToken };
+// Middleware zur Überprüfung des Benutzertyps
+const checkUserType = (type) => {
+    return (req, res, next) => {
+        if (req.user.userType !== type) {
+            return res.status(403).json({ error: "Zugriff verweigert." });
+        }
+        next();
+    };
+};
+
+module.exports = { educationController, authenticateToken, checkUserType };

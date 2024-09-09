@@ -1,28 +1,27 @@
 const express = require('express');
-const { educationController, authenticateToken } = require('../controller/education.controller');
+const { educationController, authenticateToken, checkUserType } = require('../controller/education.controller');
 const router = express.Router();
 
 // Admin-Routen
-router.post('/register-admin', educationController.registerAdmin);
+router.post('/admin/register', educationController.registerAdmin);
+router.get('/admin/lehrbetriebe', authenticateToken, checkUserType('admin'), educationController.getAllLehrbetriebe);
 
 // Lehrbetrieb-Routen
-router.post('/register-lehrbetrieb', educationController.registerLehrbetrieb);
+router.post('/lehrbetrieb/register', educationController.registerLehrbetrieb);
+router.get('/lehrbetrieb/own', authenticateToken, checkUserType('lehrbetrieb'), educationController.getOwnLehrbetrieb);
 
 // Berufsbildner-Routen
-router.post('/register-berufsbildner', educationController.registerBerufsbildner);
+router.post('/berufsbildner/register', educationController.registerBerufsbildner);
 
-// Lernende-Routen
-router.post('/register-lernender', authenticateToken, educationController.registerLernender);
-router.post('/add-lernender', authenticateToken, educationController.addLernender);
-router.get('/get-all-lernende', authenticateToken, educationController.getLernendeMitFaecher);
+// Lernenden-Routen
+router.post('/lernender/register', authenticateToken, checkUserType('berufsbildner'), educationController.registerLernender);
+router.get('/lernende/mit-faecher', authenticateToken, checkUserType('berufsbildner'), educationController.getLernendeMitFaecher);
+router.post('/lernender/:lernenderId/fach', authenticateToken, checkUserType('berufsbildner'), educationController.addFach);
+router.get('/lernender/:lernenderId/faecher', authenticateToken, checkUserType('berufsbildner'), educationController.getFaecher);
+router.post('/lernender/:lernenderId/note', authenticateToken, checkUserType('berufsbildner'), educationController.addNote);
+router.get('/fach/:fachId/noten', authenticateToken, checkUserType('berufsbildner'), educationController.getNoten);
 
-// Fach-Routen
-router.post('/add-fach/:lernenderId', authenticateToken, educationController.addFach);
-router.get('/faecher/:lernenderId', authenticateToken, educationController.getFaecher);
-router.post('/add-note/:fachId', authenticateToken, educationController.addNote);
-router.get('/noten/:fachId', authenticateToken, educationController.getNoten);
-
-// Login-Routen
+// Login
 router.post('/login', educationController.login);
 
 module.exports = router;
