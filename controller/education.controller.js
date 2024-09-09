@@ -4,123 +4,117 @@ const bcrypt = require('bcrypt');
 const pool = require('../database/index');
 
 const educationController = {
-    // Lehrbetrieb registrieren
-    registerLehrbetrieb: async (req, res) => {
-        try {
-            const { benutzername, passwort, firma, vorname, nachname, adresse, plz, ort, telefon, email } = req.body;
-
-            // Sicherstellen, dass die E-Mail und der Benutzername einzigartig sind
-            const [existingLehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE email = ? OR benutzername = ?", [email, benutzername]);
-            if (existingLehrbetrieb.length > 0) {
-                return res.status(400).json({ error: "E-Mail oder Benutzername bereits vergeben." });
-            }
-
-            // Passwort verschlüsseln
-            const hashedPassword = await bcrypt.hash(passwort, 10);
-
-            const sql = `
-                INSERT INTO lehrbetrieb (benutzername, passwort, firma, vorname, nachname, adresse, plz, ort, telefon, email)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
-            const values = [benutzername, hashedPassword, firma, vorname, nachname, adresse, plz, ort, telefon, email];
-            await pool.query(sql, values);
-            res.status(201).json({ message: "Lehrbetrieb erfolgreich registriert." });
-        } catch (error) {
-            console.error("Fehler bei der Registrierung des Lehrbetriebs:", error);
-            res.status(500).json({ error: "Fehler bei der Registrierung des Lehrbetriebs." });
-        }
-    },
-
-    // Lehrbetrieb Login
-    loginLehrbetrieb: async (req, res) => {
+    // Admin-Registrierung
+    registerAdmin: async (req, res) => {
         try {
             const { benutzername, passwort } = req.body;
-            const [rows] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
 
-            if (rows.length === 0) {
-                return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
+            const [existingAdmin] = await pool.query("SELECT * FROM admin WHERE benutzername = ?", [benutzername]);
+            if (existingAdmin.length > 0) {
+                return res.status(400).json({ error: "Benutzername bereits vergeben." });
             }
 
-            const lehrbetrieb = rows[0];
+            const hashedPassword = await bcrypt.hash(passwort, 10);
+            const sql = `
+                INSERT INTO admin (benutzername, passwort)
+                VALUES (?, ?)
+            `;
+            const values = [benutzername, hashedPassword];
+            await pool.query(sql, values);
 
-            // Überprüfen, ob das Passwort übereinstimmt
-            const match = await bcrypt.compare(passwort, lehrbetrieb.passwort);
-            if (!match) {
-                return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
-            }
-
-            const token = jwt.sign({ id: lehrbetrieb.id, role: 'lehrbetrieb' }, 'secretKey', { expiresIn: '1h' });
-
-            res.json({ message: "Login erfolgreich", token });
+            res.status(201).json({ message: "Admin erfolgreich registriert." });
         } catch (error) {
-            console.error("Fehler beim Login des Lehrbetriebs:", error);
-            res.status(500).json({ error: "Fehler beim Login des Lehrbetriebs." });
+            console.error("Fehler bei der Admin-Registrierung:", error);
+            res.status(500).json({ error: "Fehler bei der Admin-Registrierung." });
         }
     },
 
-    // Berufsbildner registrieren
+    // Berufsbildner-Registrierung
     registerBerufsbildner: async (req, res) => {
         try {
-            const { lehrbetriebId, vorname, nachname, benutzername, passwort } = req.body;
+            const { benutzername, passwort, name, vorname, lehrbetriebId } = req.body;
 
-            // Sicherstellen, dass der Benutzername einzigartig ist
             const [existingBerufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
             if (existingBerufsbildner.length > 0) {
                 return res.status(400).json({ error: "Benutzername bereits vergeben." });
             }
 
-            // Passwort verschlüsseln
             const hashedPassword = await bcrypt.hash(passwort, 10);
-
             const sql = `
-                INSERT INTO berufsbildner (lehrbetrieb_id, vorname, nachname, benutzername, passwort)
+                INSERT INTO berufsbildner (lehrbetrieb_id, benutzername, passwort, name, vorname)
                 VALUES (?, ?, ?, ?, ?)
             `;
-            const values = [lehrbetriebId, vorname, nachname, benutzername, hashedPassword];
+            const values = [lehrbetriebId, benutzername, hashedPassword, name, vorname];
             await pool.query(sql, values);
+
             res.status(201).json({ message: "Berufsbildner erfolgreich registriert." });
         } catch (error) {
-            console.error("Fehler bei der Registrierung des Berufsbildners:", error);
-            res.status(500).json({ error: "Fehler bei der Registrierung des Berufsbildners." });
+            console.error("Fehler bei der Berufsbildner-Registrierung:", error);
+            res.status(500).json({ error: "Fehler bei der Berufsbildner-Registrierung." });
         }
     },
 
-    // Berufsbildner Login
-    loginBerufsbildner: async (req, res) => {
-        try {
-            const { benutzername, passwort } = req.body;
-            const [rows] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
-
-            if (rows.length === 0) {
-                return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
-            }
-
-            const berufsbildner = rows[0];
-
-            // Überprüfen, ob das Passwort übereinstimmt
-            const match = await bcrypt.compare(passwort, berufsbildner.passwort);
-            if (!match) {
-                return res.status(401).json({ error: "Benutzername oder Passwort ist falsch." });
-            }
-
-            const token = jwt.sign({ id: berufsbildner.id, role: 'berufsbildner' }, 'secretKey', { expiresIn: '1h' });
-
-            res.json({ message: "Login erfolgreich", token });
-        } catch (error) {
-            console.error("Fehler beim Login des Berufsbildners:", error);
-            res.status(500).json({ error: "Fehler beim Login des Berufsbildners." });
-        }
-    },
-
-    // Lernende abrufen
-    getLernende: async (req, res) => {
+    // Lernenden-Registrierung
+    registerLernender: async (req, res) => {
         try {
             const berufsbildnerId = req.user.id;
-            const [rows] = await pool.query("SELECT * FROM lernender WHERE berufsbildner_id = ?", [berufsbildnerId]);
-            res.json({ data: rows });
+            const { benutzername, passwort, name, vorname, beruf, berufsschule } = req.body;
+
+            const [existingLernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
+            if (existingLernender.length > 0) {
+                return res.status(400).json({ error: "Benutzername bereits vergeben." });
+            }
+
+            const hashedPassword = await bcrypt.hash(passwort, 10);
+            const sql = `
+                INSERT INTO lernender (berufsbildner_id, benutzername, passwort, name, vorname, beruf, berufsschule)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `;
+            const values = [berufsbildnerId, benutzername, hashedPassword, name, vorname, beruf, berufsschule];
+            await pool.query(sql, values);
+
+            res.status(201).json({ message: "Lernender erfolgreich registriert." });
         } catch (error) {
-            console.error("Fehler beim Abrufen der Lernenden:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Lernenden." });
+            console.error("Fehler bei der Lernenden-Registrierung:", error);
+            res.status(500).json({ error: "Fehler bei der Lernenden-Registrierung." });
+        }
+    },
+
+    // Login für Admin, Berufsbildner und Lernende
+    login: async (req, res) => {
+        try {
+            const { benutzername, passwort } = req.body;
+
+            const [admin] = await pool.query("SELECT * FROM admin WHERE benutzername = ?", [benutzername]);
+            const [berufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
+            const [lernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
+
+            let user = null;
+            let userType = null;
+
+            if (admin.length > 0) {
+                user = admin[0];
+                userType = 'admin';
+            } else if (berufsbildner.length > 0) {
+                user = berufsbildner[0];
+                userType = 'berufsbildner';
+            } else if (lernender.length > 0) {
+                user = lernender[0];
+                userType = 'lernender';
+            } else {
+                return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
+            }
+
+            const validPassword = await bcrypt.compare(passwort, user.passwort);
+            if (!validPassword) {
+                return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
+            }
+
+            const token = jwt.sign({ id: user.id, benutzername: user.benutzername, userType }, 'secretKey', { expiresIn: '1h' });
+            res.json({ token, userType });
+        } catch (error) {
+            console.error("Fehler beim Login:", error);
+            res.status(500).json({ error: "Fehler beim Login." });
         }
     },
 
@@ -145,37 +139,33 @@ const educationController = {
         }
     },
 
-    // Lernenden hinzufügen (Nur für Berufsbildner oder Admin)
+    // Lernenden hinzufügen
     addLernender: async (req, res) => {
         try {
             const berufsbildnerId = req.user.id;
             const { benutzername, passwort, name, vorname, beruf, berufsschule } = req.body;
-    
-            // Überprüfen, ob der Benutzername bereits vergeben ist
+
             const [existingLernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
             if (existingLernender.length > 0) {
                 return res.status(400).json({ error: "Benutzername bereits vergeben." });
             }
-    
-            // Passwort verschlüsseln
+
             const hashedPassword = await bcrypt.hash(passwort, 10);
-    
-            // SQL-Abfrage zum Einfügen eines neuen Lernenden
             const sql = `
                 INSERT INTO lernender (berufsbildner_id, benutzername, passwort, name, vorname, beruf, berufsschule)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             `;
             const values = [berufsbildnerId, benutzername, hashedPassword, name, vorname, beruf, berufsschule];
             await pool.query(sql, values);
-    
+
             res.status(201).json({ message: "Lernender erfolgreich hinzugefügt." });
         } catch (error) {
             console.error("Fehler beim Hinzufügen des Lernenden:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen des Lernenden." });
         }
     },
-    
-    // Fach hinzufügen (Nur für Berufsbildner)
+
+    // Fach hinzufügen
     addFach: async (req, res) => {
         try {
             const { lernenderId } = req.params;
@@ -205,7 +195,7 @@ const educationController = {
         }
     },
 
-    // Note hinzufügen (für ein Fach)
+    // Note hinzufügen
     addNote: async (req, res) => {
         try {
             const fachId = req.params.fachId;
@@ -234,44 +224,6 @@ const educationController = {
             res.status(500).json({ error: "Fehler beim Abrufen der Noten." });
         }
     },
-
-    // Alle Lehrbetriebe abrufen
-    getAllLehrbetriebe: async (req, res) => {
-        try {
-            const [rows] = await pool.query("SELECT * FROM lehrbetrieb");
-            res.json({ data: rows });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
-        }
-    },
-
-    // Lehrbetrieb-Details abrufen
-    getLehrbetriebById: async (req, res) => {
-        try {
-            const lehrbetriebId = req.params.lehrbetriebId;
-            const [rows] = await pool.query("SELECT * FROM lehrbetrieb WHERE id = ?", [lehrbetriebId]);
-            if (rows.length === 0) {
-                return res.status(404).json({ error: "Lehrbetrieb nicht gefunden." });
-            }
-            res.json({ data: rows[0] });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Lehrbetrieb-Details:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetrieb-Details." });
-        }
-    },
-
-    // Berufsbildner eines Lehrbetriebs abrufen
-    getBerufsbildnerByLehrbetrieb: async (req, res) => {
-        try {
-            const lehrbetriebId = req.params.lehrbetriebId;
-            const [rows] = await pool.query("SELECT * FROM berufsbildner WHERE lehrbetrieb_id = ?", [lehrbetriebId]);
-            res.json({ data: rows });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Berufsbildner:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Berufsbildner." });
-        }
-    }
 };
 
 // Middleware zum Überprüfen des Tokens

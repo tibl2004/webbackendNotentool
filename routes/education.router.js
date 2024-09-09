@@ -1,42 +1,35 @@
 const express = require('express');
+const router = express.Router();
 const { educationController, authenticateToken } = require('../controller/education.controller');
 
-const router = express.Router();
+// Admin-Registrierung
+router.post('/admin/register', educationController.registerAdmin);
 
-// Lehrbetrieb registrieren
-router.post('/register-lehrbetrieb', educationController.registerLehrbetrieb);
+// Berufsbildner-Registrierung
+router.post('/berufsbildner/register', authenticateToken,educationController.registerBerufsbildner);
 
-// Lehrbetrieb Login
-router.post('/login-lehrbetrieb', educationController.loginLehrbetrieb);
+// Lernenden-Registrierung
+router.post('/lernender/register', authenticateToken, educationController.registerLernender);
 
-// Berufsbildner registrieren (mit Authentifizierung)
-router.post('/register-berufsbildner', authenticateToken, educationController.registerBerufsbildner);
+// Login für Admin, Berufsbildner und Lernende
+router.post('/login', educationController.login);
 
-// Berufsbildner Login
-router.post('/login-berufsbildner', educationController.loginBerufsbildner);
+// Lernende mit Fächern abrufen
+router.get('/lernende/faecher', authenticateToken, educationController.getLernendeMitFaecher);
 
-// Lernende verwalten (mit Authentifizierung)
-router.get('/lernende', authenticateToken, educationController.getLernende);
-router.post('/lernende', authenticateToken, educationController.addLernender);
+// Lernenden hinzufügen
+router.post('/lernender/add', authenticateToken, educationController.addLernender);
 
-// Alle Lernenden eines Berufsbildners mit Fächern abrufen (mit Authentifizierung)
-router.get('/lernende-mit-faecher', authenticateToken, educationController.getLernendeMitFaecher);
+// Fach hinzufügen
+router.post('/fach/:lernenderId/add', authenticateToken, educationController.addFach);
 
-// Fächer verwalten (mit Authentifizierung)
-router.post('/fach/:lernenderId', authenticateToken, educationController.addFach);
-router.get('/faecher/:lernenderId', authenticateToken, educationController.getFaecher);
+// Alle Fächer eines Lernenden abrufen
+router.get('/fach/:lernenderId', authenticateToken, educationController.getFaecher);
 
-// Noten verwalten (mit Authentifizierung)
-router.post('/note/:fachId', authenticateToken, educationController.addNote);
-router.get('/noten/:fachId', authenticateToken, educationController.getNoten);
+// Note hinzufügen
+router.post('/note/:fachId/add', authenticateToken, educationController.addNote);
 
-// Alle Lehrbetriebe abrufen (keine Authentifizierung erforderlich)
-router.get('/lehrbetriebe', educationController.getAllLehrbetriebe);
-
-// Lehrbetrieb-Details abrufen (keine Authentifizierung erforderlich)
-router.get('/lehrbetrieb/:lehrbetriebId', educationController.getLehrbetriebById);
-
-// Berufsbildner eines Lehrbetriebs abrufen (keine Authentifizierung erforderlich)
-router.get('/lehrbetrieb/:lehrbetriebId/berufsbildner', educationController.getBerufsbildnerByLehrbetrieb);
+// Alle Noten eines Fachs abrufen
+router.get('/note/:fachId', authenticateToken, educationController.getNoten);
 
 module.exports = router;
