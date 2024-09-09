@@ -29,6 +29,31 @@ const educationController = {
         }
     },
 
+    // Lehrbetrieb-Registrierung
+    registerLehrbetrieb: async (req, res) => {
+        try {
+            const { name, adresse, benutzername, passwort } = req.body;
+
+            const [existingLehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
+            if (existingLehrbetrieb.length > 0) {
+                return res.status(400).json({ error: "Benutzername bereits vergeben." });
+            }
+
+            const hashedPassword = await bcrypt.hash(passwort, 10);
+            const sql = `
+                INSERT INTO lehrbetrieb (name, adresse, benutzername, passwort)
+                VALUES (?, ?, ?, ?)
+            `;
+            const values = [name, adresse, benutzername, hashedPassword];
+            await pool.query(sql, values);
+
+            res.status(201).json({ message: "Lehrbetrieb erfolgreich registriert." });
+        } catch (error) {
+            console.error("Fehler bei der Lehrbetrieb-Registrierung:", error);
+            res.status(500).json({ error: "Fehler bei der Lehrbetrieb-Registrierung." });
+        }
+    },
+
     // Berufsbildner-Registrierung
     registerBerufsbildner: async (req, res) => {
         try {
@@ -80,7 +105,7 @@ const educationController = {
         }
     },
 
-    // Login für Admin, Berufsbildner und Lernende
+    // Login für Admin, Berufsbildner, Lernende und Lehrbetrieb
     login: async (req, res) => {
         try {
             const { benutzername, passwort } = req.body;
@@ -88,6 +113,7 @@ const educationController = {
             const [admin] = await pool.query("SELECT * FROM admin WHERE benutzername = ?", [benutzername]);
             const [berufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
             const [lernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
+            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
 
             let user = null;
             let userType = null;
@@ -101,6 +127,9 @@ const educationController = {
             } else if (lernender.length > 0) {
                 user = lernender[0];
                 userType = 'lernender';
+            } else if (lehrbetrieb.length > 0) {
+                user = lehrbetrieb[0];
+                userType = 'lehrbetrieb';
             } else {
                 return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
             }
