@@ -11,8 +11,6 @@ router.post('/register/berufsbildner', educationController.registerBerufsbildner
 // Login-Routen
 router.post('/login', educationController.login);
 
-// Geschützte Routen (Token-Authentifizierung erforderlich)
-router.use(educationController.authenticateToken); // Token-Authentifizierung für alle folgenden Routen
 
 // Lernende
 router.get('/lernende', educationController.getLernendeMitFaecher);
