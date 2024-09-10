@@ -1,27 +1,27 @@
 const express = require('express');
-const { educationController, authenticateToken, checkUserType } = require('../controller/education.controller');
+const educationController = require('../controller/education.controller');
+
 const router = express.Router();
 
-// Admin-Routen
-router.post('/admin/register', educationController.registerAdmin);
-router.get('/admin/lehrbetriebe', authenticateToken, checkUserType('admin'), educationController.getAllLehrbetriebe);
+// Routen für die Registrierung
+router.post('/register/admin', educationController.registerAdmin);
+router.post('/register/lehrbetrieb', educationController.registerLehrbetrieb);
+router.post('/register/berufsbildner', educationController.registerBerufsbildner);
 
-// Lehrbetrieb-Routen
-router.post('/lehrbetrieb/register', educationController.registerLehrbetrieb);
-router.get('/lehrbetrieb/own', authenticateToken, checkUserType('lehrbetrieb'), educationController.getOwnLehrbetrieb);
-
-// Berufsbildner-Routen
-router.post('/berufsbildner/register', educationController.registerBerufsbildner);
-
-// Lernenden-Routen
-router.post('/lernender/register', authenticateToken, checkUserType('berufsbildner'), educationController.registerLernender);
-router.get('/lernende/mit-faecher', authenticateToken, checkUserType('berufsbildner'), educationController.getLernendeMitFaecher);
-router.post('/lernender/:lernenderId/fach', authenticateToken, checkUserType('berufsbildner'), educationController.addFach);
-router.get('/lernender/:lernenderId/faecher', authenticateToken, checkUserType('berufsbildner'), educationController.getFaecher);
-router.post('/lernender/:lernenderId/note', authenticateToken, checkUserType('berufsbildner'), educationController.addNote);
-router.get('/fach/:fachId/noten', authenticateToken, checkUserType('berufsbildner'), educationController.getNoten);
-
-// Login
+// Login-Routen
 router.post('/login', educationController.login);
+
+// Geschützte Routen (Token-Authentifizierung erforderlich)
+router.use(educationController.authenticateToken); // Token-Authentifizierung für alle folgenden Routen
+
+// Lernende
+router.get('/lernende', educationController.getLernendeMitFaecher);
+router.post('/lernende', educationController.addLernender);
+
+// Fächer
+router.post('/lernende/:lernenderId/faecher', educationController.addFach);
+
+// Noten
+router.post('/lernende/:lernenderId/faecher/:fachId/noten', educationController.addNote);
 
 module.exports = router;
