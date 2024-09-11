@@ -180,43 +180,38 @@ const educationController = {
         }
     },
 
-    // Lernenden hinzufügen
-    addLernender: async (req, res) => {
+    // Lernenden aktualisieren (Edit)
+    updateLernender: async (req, res) => {
         try {
-            const berufsbildnerId = req.user.id;
-            const { benutzername, passwort, name, vorname, beruf, berufsschule } = req.body;
+            const { lernenderId } = req.params;
+            const { benutzername, name, vorname, beruf, berufsschule } = req.body;
 
-            const [existingLernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
-            if (existingLernender.length > 0) {
-                return res.status(400).json({ error: "Benutzername bereits vergeben." });
-            }
-
-            const hashedPassword = await bcrypt.hash(passwort, 10);
             const sql = `
-                INSERT INTO lernender (berufsbildner_id, benutzername, passwort, name, vorname, beruf, berufsschule)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                UPDATE lernender 
+                SET benutzername = ?, name = ?, vorname = ?, beruf = ?, berufsschule = ?
+                WHERE id = ?
             `;
-            const values = [berufsbildnerId, benutzername, hashedPassword, name, vorname, beruf, berufsschule];
+            const values = [benutzername, name, vorname, beruf, berufsschule, lernenderId];
             await pool.query(sql, values);
 
-            res.status(201).json({ message: "Lernender erfolgreich hinzugefügt." });
+            res.status(200).json({ message: "Lernender erfolgreich aktualisiert." });
         } catch (error) {
-            console.error("Fehler beim Hinzufügen des Lernenden:", error);
-            res.status(500).json({ error: "Fehler beim Hinzufügen des Lernenden." });
+            console.error("Fehler beim Aktualisieren des Lernenden:", error);
+            res.status(500).json({ error: "Fehler beim Aktualisieren des Lernenden." });
         }
     },
 
     // Fach hinzufügen
     addFach: async (req, res) => {
         try {
-            const { lernenderId } = req.params;
-            const { name } = req.body;
+            const lernenderId = req.params.lernenderId; // Lernender-ID aus URL-Parametern
+            const { fachname } = req.body;
 
             const sql = `
-                INSERT INTO fach (lernender_id, name)
+                INSERT INTO fach (lernender_id, fachname)
                 VALUES (?, ?)
             `;
-            const values = [lernenderId, name];
+            const values = [lernenderId, fachname];
             await pool.query(sql, values);
 
             res.status(201).json({ message: "Fach erfolgreich hinzugefügt." });
@@ -229,28 +224,83 @@ const educationController = {
     // Note hinzufügen
     addNote: async (req, res) => {
         try {
-            const { lernenderId, fachId } = req.params;
+            const fachId = req.params.fachId; // Fach-ID aus URL-Parametern
             const { note } = req.body;
 
-            const [fach] = await pool.query(`
-                SELECT * FROM fach WHERE id = ? AND lernender_id = ?
-            `, [fachId, lernenderId]);
-
-            if (fach.length === 0) {
-                return res.status(404).json({ error: "Fach für diesen Lernenden nicht gefunden." });
-            }
-
             const sql = `
-                INSERT INTO note (fach_id, note)
-                VALUES (?, ?)
+                UPDATE fach 
+                SET note = ?
+                WHERE id = ?
             `;
-            const values = [fachId, note];
+            const values = [note, fachId];
             await pool.query(sql, values);
 
-            res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
+            res.status(200).json({ message: "Note erfolgreich hinzugefügt." });
         } catch (error) {
             console.error("Fehler beim Hinzufügen der Note:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+        }
+    },
+
+    // Fach aktualisieren
+    updateFach: async (req, res) => {
+        try {
+            const { fachId } = req.params;
+            const { fachname } = req.body;
+
+            const sql = `
+                UPDATE fach 
+                SET fachname = ?
+                WHERE id = ?
+            `;
+            const values = [fachname, fachId];
+            await pool.query(sql, values);
+
+            res.status(200).json({ message: "Fach erfolgreich aktualisiert." });
+        } catch (error) {
+            console.error("Fehler beim Aktualisieren des Fachs:", error);
+            res.status(500).json({ error: "Fehler beim Aktualisieren des Fachs." });
+        }
+    },
+
+    // Note aktualisieren
+    updateNote: async (req, res) => {
+        try {
+            const { fachId } = req.params;
+            const { note } = req.body;
+
+            const sql = `
+                UPDATE fach 
+                SET note = ?
+                WHERE id = ?
+            `;
+            const values = [note, fachId];
+            await pool.query(sql, values);
+
+            res.status(200).json({ message: "Note erfolgreich aktualisiert." });
+        } catch (error) {
+            console.error("Fehler beim Aktualisieren der Note:", error);
+            res.status(500).json({ error: "Fehler beim Aktualisieren der Note." });
+        }
+    },
+
+    // Note löschen
+    deleteNote: async (req, res) => {
+        try {
+            const { fachId } = req.params;
+
+            const sql = `
+                UPDATE fach
+                SET note = NULL
+                WHERE id = ?
+            `;
+            const values = [fachId];
+            await pool.query(sql, values);
+
+            res.status(200).json({ message: "Note erfolgreich gelöscht." });
+        } catch (error) {
+            console.error("Fehler beim Löschen der Note:", error);
+            res.status(500).json({ error: "Fehler beim Löschen der Note." });
         }
     }
 };
