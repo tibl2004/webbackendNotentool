@@ -28,7 +28,7 @@ router.get('/lernende', educationController.authenticateToken, educationControll
 router.put('/lernender/:lernenderId', educationController.authenticateToken, educationController.updateLernender);
 
 // Fach hinzufügen (mit Authentifizierung) und lernenderId in der URL
-router.post('/lernender/:lernenderId/fach', educationController.authenticateToken, educationController.addFach);
+router.post('/lernende/:lernenderId/fach', educationController.authenticateToken, educationController.addFach);
 
 // Fach aktualisieren (mit Authentifizierung) und lernenderId in der URL
 router.put('/lernender/:lernenderId/fach/:fachId', educationController.authenticateToken, educationController.updateFach);
