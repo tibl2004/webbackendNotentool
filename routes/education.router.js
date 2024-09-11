@@ -42,6 +42,9 @@ router.post('/lernender/:lernenderId/fach/:fachId/note', educationController.aut
 // Note aktualisieren (mit Authentifizierung) und lernenderId in der URL
 router.put('/lernender/:lernenderId/fach/:fachId/note', educationController.authenticateToken, educationController.updateNote);
 
+// Endpunkt zum Abrufen der Fächer eines Lernenden (ohne Noten)
+router.get('/lernende/:lernenderId/faecher', educationController.getFaecherFuerLernender);
+
 // Note löschen (mit Authentifizierung) und lernenderId in der URL
 router.delete('/lernender/:lernenderId/fach/:fachId/note', educationController.authenticateToken, educationController.deleteNote);
 

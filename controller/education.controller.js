@@ -264,6 +264,23 @@ const educationController = {
         }
     },
 
+    // Fächer eines bestimmten Lernenden abrufen (nur Fachnamen, keine Noten)
+getFaecherFuerLernender: async (req, res) => {
+    try {
+        const { lernenderId } = req.params; // Lernender-ID aus URL-Parametern
+
+        // Abrufen der Fächer für den angegebenen Lernenden
+        const [faecher] = await pool.query("SELECT id, fachname FROM fach WHERE lernender_id = ?", [lernenderId]);
+
+        // Rückgabe der Fächer
+        res.json({ data: faecher });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Fächer für den Lernenden:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Fächer für den Lernenden." });
+    }
+},
+
+
     // Note hinzufügen
     addNote: async (req, res) => {
         try {
