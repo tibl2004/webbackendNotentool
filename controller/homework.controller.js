@@ -24,13 +24,13 @@ const homeworkController = {
     createHomework: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
-            const { titel, beschreibung, abgabedatum } = req.body; // Extrahiere Daten aus dem Body
+            const { titel, beschreibung, abgabedatum, fachId } = req.body; // Extrahiere Daten aus dem Body, inklusive FachID
 
             const sql = `
-                INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, erledigt)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, fach_id, erledigt)
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
-            const values = [lernenderId, titel, beschreibung, abgabedatum, false];
+            const values = [lernenderId, titel, beschreibung, abgabedatum, fachId, false];
             await pool.query(sql, values);
 
             res.status(201).json({ message: "Hausaufgabe erfolgreich erstellt." });
