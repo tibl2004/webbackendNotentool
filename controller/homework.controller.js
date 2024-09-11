@@ -1,11 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const pool = require('../database/index');
+const pool = require('../database/index'); // Pool zur Datenbankverbindung
 
 const homeworkController = {
+    // Authentifizierungsmiddleware zum Verifizieren des JWT-Tokens
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token
+        const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token aus dem Authorization Header
 
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
 
@@ -14,16 +15,16 @@ const homeworkController = {
                 console.error('Token Überprüfung Fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user; // Die Benutzerinformationen aus dem Token zur Verfügung stellen
+            req.user = user; // Setze die Benutzerinformationen aus dem Token
             next();
         });
     },
 
-    // Hausaufgabe erstellen (Lernenden-ID automatisch erkennen)
+    // Hausaufgabe erstellen (Lernenden-ID automatisch aus dem Token extrahieren)
     createHomework: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
-            const { titel, beschreibung, abgabedatum } = req.body;
+            const { titel, beschreibung, abgabedatum } = req.body; // Extrahiere Daten aus dem Body
 
             const sql = `
                 INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, erledigt)
@@ -39,11 +40,12 @@ const homeworkController = {
         }
     },
 
-    // Hausaufgaben für einen Lernenden abrufen
+    // Hausaufgaben eines Lernenden abrufen (aus dem JWT-Token)
     getHomeworksByLernenderId: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
             const [homeworks] = await pool.query("SELECT * FROM hausaufgabe WHERE lernender_id = ?", [lernenderId]);
+
             res.json({ data: homeworks });
         } catch (error) {
             console.error("Fehler beim Abrufen der Hausaufgaben:", error);
@@ -51,32 +53,12 @@ const homeworkController = {
         }
     },
 
-    // Hausaufgabe aktualisieren (Erledigt-Status)
-    updateHomeworkStatus: async (req, res) => {
-        try {
-            const { homeworkId } = req.params;
-            const { erledigt } = req.body;
-
-            const sql = `
-                UPDATE hausaufgabe
-                SET erledigt = ?
-                WHERE id = ? AND lernender_id = ?
-            `;
-            const values = [erledigt, homeworkId, req.user.id];
-            await pool.query(sql, values);
-
-            res.status(200).json({ message: "Hausaufgabe erfolgreich aktualisiert." });
-        } catch (error) {
-            console.error("Fehler beim Aktualisieren der Hausaufgabe:", error);
-            res.status(500).json({ error: "Fehler beim Aktualisieren der Hausaufgabe." });
-        }
-    },
-
-    // Hausaufgabe abrufen nach ID
+    // Hausaufgabe anhand der ID abrufen
     getHomeworkById: async (req, res) => {
         try {
             const { homeworkId } = req.params;
-            const [homework] = await pool.query("SELECT * FROM hausaufgabe WHERE id = ? AND lernender_id = ?", [homeworkId, req.user.id]);
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const [homework] = await pool.query("SELECT * FROM hausaufgabe WHERE id = ? AND lernender_id = ?", [homeworkId, lernenderId]);
 
             if (homework.length === 0) {
                 return res.status(404).json({ error: "Hausaufgabe nicht gefunden oder nicht autorisiert." });
@@ -89,16 +71,39 @@ const homeworkController = {
         }
     },
 
+    // Hausaufgabe aktualisieren (Erledigt-Status)
+    updateHomeworkStatus: async (req, res) => {
+        try {
+            const { homeworkId } = req.params;
+            const { erledigt } = req.body;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+
+            const sql = `
+                UPDATE hausaufgabe
+                SET erledigt = ?
+                WHERE id = ? AND lernender_id = ?
+            `;
+            const values = [erledigt, homeworkId, lernenderId];
+            await pool.query(sql, values);
+
+            res.status(200).json({ message: "Hausaufgabe erfolgreich aktualisiert." });
+        } catch (error) {
+            console.error("Fehler beim Aktualisieren der Hausaufgabe:", error);
+            res.status(500).json({ error: "Fehler beim Aktualisieren der Hausaufgabe." });
+        }
+    },
+
     // Hausaufgabe löschen
     deleteHomework: async (req, res) => {
         try {
             const { homeworkId } = req.params;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
 
             const sql = `
                 DELETE FROM hausaufgabe
                 WHERE id = ? AND lernender_id = ?
             `;
-            const values = [homeworkId, req.user.id];
+            const values = [homeworkId, lernenderId];
             await pool.query(sql, values);
 
             res.status(200).json({ message: "Hausaufgabe erfolgreich gelöscht." });

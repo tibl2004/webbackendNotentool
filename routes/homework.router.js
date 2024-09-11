@@ -4,18 +4,18 @@ const homeworkController = require('../controller/homework.controller'); // Pfad
 const router = express.Router();
 
 // Hausaufgabe hinzufügen (mit Authentifizierung)
-router.post('/homework', homeworkController.authenticateToken, homeworkController.addHomework);
+router.post('/', homeworkController.authenticateToken, homeworkController.createHomework);
 
 // Alle Hausaufgaben eines Lernenden abrufen (mit Authentifizierung)
-router.get('/homework/lernender/:lernenderId', homeworkController.authenticateToken, homeworkController.getHomeworkForLernender);
+router.get('/lernender', homeworkController.authenticateToken, homeworkController.getHomeworksByLernenderId);
 
 // Hausaufgabe anhand der ID abrufen (mit Authentifizierung)
-router.get('/homework/:homeworkId', homeworkController.authenticateToken, homeworkController.getHomeworkById);
+router.get('/:homeworkId', homeworkController.authenticateToken, homeworkController.getHomeworkById);
 
 // Hausaufgabe aktualisieren (mit Authentifizierung)
-router.put('/homework/:homeworkId', homeworkController.authenticateToken, homeworkController.updateHomework);
+router.put('/:homeworkId', homeworkController.authenticateToken, homeworkController.updateHomeworkStatus);
 
 // Hausaufgabe löschen (mit Authentifizierung)
-router.delete('/homework/:homeworkId', homeworkController.authenticateToken, homeworkController.deleteHomework);
+router.delete('/:homeworkId', homeworkController.authenticateToken, homeworkController.deleteHomework);
 
 module.exports = router;
