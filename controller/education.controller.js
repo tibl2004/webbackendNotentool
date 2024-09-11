@@ -4,17 +4,24 @@ const bcrypt = require('bcrypt');
 const pool = require('../database/index');
 
 const educationController = {
-    // Middleware zur Authentifizierung des Tokens
     authenticateToken: (req, res, next) => {
-        const token = req.headers['authorization'];
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token
+    
+        console.log('Received Token:', token);
+    
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
-
+    
         jwt.verify(token, 'secretKey', (err, user) => {
-            if (err) return res.status(403).json({ error: 'Ungültiger Token.' });
+            if (err) {
+                console.error('Token Überprüfung Fehlgeschlagen:', err);
+                return res.status(403).json({ error: 'Ungültiger Token.' });
+            }
             req.user = user;
             next();
         });
     },
+    
 
     // Admin-Registrierung
     registerAdmin: async (req, res) => {
