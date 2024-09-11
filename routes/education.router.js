@@ -48,4 +48,8 @@ router.get('/lernende/:lernenderId/faecher', educationController.getFaecherFuerL
 // Note löschen (mit Authentifizierung) und lernenderId in der URL
 router.delete('/lernender/:lernenderId/fach/:fachId/note', educationController.authenticateToken, educationController.deleteNote);
 
+// Route zum Abrufen eines Lernenden anhand der ID
+router.get('/lernende/:id', educationController.getLernenderById);
+
+
 module.exports = router;

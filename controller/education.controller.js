@@ -300,6 +300,26 @@ getFaecherFuerLernender: async (req, res) => {
     }
 },
 
+// Lernender mit ID abrufen
+getLernenderById: async (req, res) => {
+    try {
+        const { id } = req.params; // Lernende-ID aus URL-Parametern
+
+        // Abrufen des Lernenden basierend auf der ID
+        const [lernender] = await pool.query("SELECT * FROM lernender WHERE id = ?", [id]);
+
+        if (lernender.length === 0) {
+            return res.status(404).json({ message: "Lernender nicht gefunden." });
+        }
+
+        res.status(200).json({ data: lernender[0] });
+    } catch (error) {
+        console.error("Fehler beim Abrufen des Lernenden:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen des Lernenden." });
+    }
+},
+
+
 
     // Note hinzufügen
     addNote: async (req, res) => {
