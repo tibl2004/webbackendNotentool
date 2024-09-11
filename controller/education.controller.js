@@ -166,6 +166,16 @@ const educationController = {
         }
     },
 
+    getLehrbetriebe: async (req, res) => {
+        try {
+            const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
+            res.json({ data: lehrbetriebe });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
+        }
+    },
+
     // Lernende mit Fächern abrufen
     getLernendeMitFaecher: async (req, res) => {
         try {

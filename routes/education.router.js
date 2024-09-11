@@ -18,6 +18,8 @@ router.post('/register/lernender', educationController.authenticateToken, educat
 // Login für Admin, Berufsbildner, Lernende und Lehrbetrieb
 router.post('/login', educationController.login);
 
+router.get('/lehrbetriebe', educationController.getLehrbetriebe);
+
 // Lernende mit Fächern abrufen (mit Authentifizierung)
 router.get('/lernende', educationController.authenticateToken, educationController.getLernendeMitFaecher);
 
