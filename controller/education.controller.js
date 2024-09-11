@@ -8,8 +8,6 @@ const educationController = {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token
     
-        console.log('Received Token:', token);
-    
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
     
         jwt.verify(token, 'secretKey', (err, user) => {
@@ -17,10 +15,11 @@ const educationController = {
                 console.error('Token Überprüfung Fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user;
+            req.user = user; // Die Benutzerinformationen aus dem Token zur Verfügung stellen
             next();
         });
     },
+    
     
 
     // Admin-Registrierung
@@ -144,15 +143,16 @@ const educationController = {
     login: async (req, res) => {
         try {
             const { benutzername, passwort } = req.body;
-
+    
+            // Versuche, den Benutzer in allen Tabellen zu finden
             const [admin] = await pool.query("SELECT * FROM admin WHERE benutzername = ?", [benutzername]);
             const [berufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
             const [lernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
             const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
-
+    
             let user = null;
             let userType = null;
-
+    
             if (admin.length > 0) {
                 user = admin[0];
                 userType = 'admin';
@@ -168,19 +168,29 @@ const educationController = {
             } else {
                 return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
             }
-
+    
+            // Überprüfe das Passwort
             const validPassword = await bcrypt.compare(passwort, user.passwort);
             if (!validPassword) {
                 return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
             }
-
-            const token = jwt.sign({ id: user.id, benutzername: user.benutzername, userType }, 'secretKey', { expiresIn: '1h' });
+    
+            // Erstelle das Token-Payload mit allen relevanten Informationen
+            const tokenPayload = {
+                id: user.id,
+                benutzername: user.benutzername,
+                userType,
+                ...user // Alle anderen Benutzerinformationen hinzufügen
+            };
+    
+            const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '1h' });
             res.json({ token, userType });
         } catch (error) {
             console.error("Fehler beim Login:", error);
             res.status(500).json({ error: "Fehler beim Login." });
         }
     },
+    
 
     getLehrbetriebe: async (req, res) => {
         try {
