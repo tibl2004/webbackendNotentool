@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/', homeworkController.authenticateToken, homeworkController.createHomework);
 
 // Alle Hausaufgaben eines Lernenden abrufen (mit Authentifizierung)
-router.get('/lernender', homeworkController.authenticateToken, homeworkController.getHomeworksByLernenderId);
+router.get('/', homeworkController.authenticateToken, homeworkController.getHomeworksByLernenderId);
 
 // Hausaufgabe anhand der ID abrufen (mit Authentifizierung)
 router.get('/:homeworkId', homeworkController.authenticateToken, homeworkController.getHomeworkById);
