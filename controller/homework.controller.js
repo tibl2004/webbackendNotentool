@@ -21,38 +21,37 @@ const homeworkController = {
     },
 
     // Hausaufgabe erstellen (mit FachID)
-   // Hausaufgabe erstellen (Lernenden-ID automatisch erkennen und FachID übergeben)
-createHomework: async (req, res) => {
-    try {
-        const lernenderId = req.user.id; // Authentifizierter Lernender
-        const { titel, beschreibung, abgabedatum, fach_id } = req.body; // FachID wird vom Frontend übergeben
+    createHomework: async (req, res) => {
+        try {
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const { titel, beschreibung, abgabedatum, fach_id } = req.body; // FachID wird vom Frontend übergeben
 
-        const sql = `
-            INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, erledigt, fach_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
-        const values = [lernenderId, titel, beschreibung, abgabedatum, false, fach_id]; // FachID wird gespeichert
-        await pool.query(sql, values);
+            const sql = `
+                INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, erledigt, fach_id)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            const values = [lernenderId, titel, beschreibung, abgabedatum, false, fach_id]; // FachID wird gespeichert
+            await pool.query(sql, values);
 
-        res.status(201).json({ message: "Hausaufgabe erfolgreich erstellt." });
-    } catch (error) {
-        console.error("Fehler beim Erstellen der Hausaufgabe:", error);
-        res.status(500).json({ error: "Fehler beim Erstellen der Hausaufgabe." });
-    }
-},
+            res.status(201).json({ message: "Hausaufgabe erfolgreich erstellt." });
+        } catch (error) {
+            console.error("Fehler beim Erstellen der Hausaufgabe:", error);
+            res.status(500).json({ error: "Fehler beim Erstellen der Hausaufgabe." });
+        }
+    },
 
-   // Alle Hausaufgaben für einen Lernenden abrufen
-getHomeworksByLernenderId: async (req, res) => {
-    try {
-        const lernenderId = req.user.id; // Authentifizierter Lernender
-        const [homeworks] = await pool.query("SELECT * FROM hausaufgabe WHERE lernender_id = ?", [lernenderId]);
+    // Alle Hausaufgaben für einen Lernenden abrufen
+    getHomeworksByLernenderId: async (req, res) => {
+        try {
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const [homeworks] = await pool.query("SELECT * FROM hausaufgabe WHERE lernender_id = ?", [lernenderId]);
 
-        res.json({ data: homeworks }); // Enthält auch die FachID
-    } catch (error) {
-        console.error("Fehler beim Abrufen der Hausaufgaben:", error);
-        res.status(500).json({ error: "Fehler beim Abrufen der Hausaufgaben." });
-    }
-},
+            res.json({ data: homeworks }); // Enthält auch die FachID
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Hausaufgaben:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Hausaufgaben." });
+        }
+    },
 
     // Hausaufgabe nach ID abrufen
     getHomeworkById: async (req, res) => {
