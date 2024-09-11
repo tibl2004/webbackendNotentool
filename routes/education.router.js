@@ -22,7 +22,7 @@ router.post('/login', educationController.login);
 router.get('/lehrbetriebe', educationController.authenticateToken, educationController.getLehrbetriebe);
 
 // Lernende mit Fächern abrufen (mit Authentifizierung)
-router.get('/lernende', educationController.authenticateToken, educationController.getLernendeMitFaecher);
+router.get('/lernende', educationController.authenticateToken, educationController.getLernende);
 
 // Lernenden aktualisieren (mit Authentifizierung)
 router.put('/lernender/:lernenderId', educationController.authenticateToken, educationController.updateLernender);
