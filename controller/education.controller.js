@@ -124,6 +124,22 @@ const educationController = {
         }
     },
 
+    getLehrbetriebe: async (req, res) => {
+        try {
+            // Überprüfen, ob der authentifizierte Benutzer ein Admin ist
+            if (req.user.userType !== 'admin') {
+                return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe abrufen.' });
+            }
+
+            const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
+            res.json({ data: lehrbetriebe });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
+        }
+    },
+
+
     // Login für Admin, Berufsbildner, Lernende und Lehrbetrieb
     login: async (req, res) => {
         try {
