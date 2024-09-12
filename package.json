@@ -12,6 +12,7 @@
     "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
+    "node-cron": "^3.0.3",
     "typeorm": "^0.3.20"
   }
 }

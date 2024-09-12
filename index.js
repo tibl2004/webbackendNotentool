@@ -13,10 +13,12 @@ app.use(express.json());
 // Routen importieren
 const educationRouter = require('./routes/education.router');
 const homeworkRouter = require('./routes/homework.router');
+const examRouter = require('./routes/exam.router');
 
 // Routen zuweisen
 app.use('/api/education', educationRouter);
 app.use('/api/homework', homeworkRouter);
+app.use('/api/exam', examRouter)
 
 // Fehlerbehandlung
 app.use((err, req, res, next) => {
