@@ -264,25 +264,26 @@ getLernende: async (req, res) => {
         }
     },
 
-    // Fach hinzufügen
-    addFach: async (req, res) => {
-        try {
-            const lernenderId = req.params.lernenderId; // Lernender-ID aus URL-Parametern
-            const { fachname } = req.body;
+    // Fach hinzufügen für den authentifizierten Lernenden
+addFach: async (req, res) => {
+    try {
+        const lernenderId = req.user.id; // Lernenden-ID aus dem Token entnehmen
+        const { fachname } = req.body;
 
-            const sql = `
-                INSERT INTO fach (lernender_id, fachname)
-                VALUES (?, ?)
-            `;
-            const values = [lernenderId, fachname];
-            await pool.query(sql, values);
+        // Einfügen des neuen Fachs für den authentifizierten Lernenden
+        const sql = `
+            INSERT INTO fach (lernender_id, fachname)
+            VALUES (?, ?)
+        `;
+        const values = [lernenderId, fachname];
+        await pool.query(sql, values);
 
-            res.status(201).json({ message: "Fach erfolgreich hinzugefügt." });
-        } catch (error) {
-            console.error("Fehler beim Hinzufügen des Fachs:", error);
-            res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
-        }
-    },
+        res.status(201).json({ message: "Fach erfolgreich hinzugefügt." });
+    } catch (error) {
+        console.error("Fehler beim Hinzufügen des Fachs:", error);
+        res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
+    }
+},
 
     // Fächer eines bestimmten Lernenden abrufen (nur Fachnamen, keine Noten)
 getFaecherFuerLernender: async (req, res) => {
