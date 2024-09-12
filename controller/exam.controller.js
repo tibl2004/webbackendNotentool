@@ -24,13 +24,13 @@ const examController = {
     // Prüfung erstellen
     createExam: async (req, res) => {
         try {
-            const { titel, beschreibung, prüfungsdatum } = req.body;
+            const { titel, beschreibung, prüfungsdatum, fach_id } = req.body;
 
             const sql = `
-                INSERT INTO prüfung (titel, beschreibung, prüfungsdatum)
-                VALUES (?, ?, ?)
+                INSERT INTO prüfung (titel, beschreibung, prüfungsdatum, fach_id)
+                VALUES (?, ?, ?, ?)
             `;
-            const values = [titel, beschreibung, prüfungsdatum];
+            const values = [titel, beschreibung, prüfungsdatum, fach_id];
             await pool.query(sql, values);
 
             res.status(201).json({ message: "Prüfung erfolgreich erstellt." });
@@ -72,14 +72,14 @@ const examController = {
     updateExam: async (req, res) => {
         try {
             const { examId } = req.params;
-            const { titel, beschreibung, prüfungsdatum } = req.body;
+            const { titel, beschreibung, prüfungsdatum, fach_id } = req.body;
 
             const sql = `
                 UPDATE prüfung
-                SET titel = ?, beschreibung = ?, prüfungsdatum = ?
+                SET titel = ?, beschreibung = ?, prüfungsdatum = ?, fach_id = ?
                 WHERE id = ?
             `;
-            const values = [titel, beschreibung, prüfungsdatum, examId];
+            const values = [titel, beschreibung, prüfungsdatum, fach_id, examId];
             await pool.query(sql, values);
 
             res.status(200).json({ message: "Prüfung erfolgreich aktualisiert." });
