@@ -14,11 +14,13 @@ app.use(express.json());
 const educationRouter = require('./routes/education.router');
 const homeworkRouter = require('./routes/homework.router');
 const examRouter = require('./routes/exam.router');
+const teacherRouter = require('./routes/teacher.router');
 
 // Routen zuweisen
 app.use('/api/education', educationRouter);
 app.use('/api/homework', homeworkRouter);
-app.use('/api/exam', examRouter)
+app.use('/api/exam', examRouter);
+app.use('/api/teacher', teacherRouter);
 
 // Fehlerbehandlung
 app.use((err, req, res, next) => {
