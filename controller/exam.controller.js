@@ -1,13 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const pool = require('../database/index'); // Pool zur Datenbankverbindung
-const cron = require('node-cron'); // Für den Cron-Job
 
 const examController = {
-    // Authentifizierungsmiddleware zum Verifizieren des JWT-Tokens
+    // Authentifizierungsmiddleware
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token aus dem Authorization Header
+        const token = authHeader && authHeader.split(' ')[1]; 
 
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
 
@@ -16,22 +15,22 @@ const examController = {
                 console.error('Token Überprüfung Fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user; // Setze die Benutzerinformationen aus dem Token
+            req.user = user; 
             next();
         });
     },
 
-    // Prüfung erstellen (mit LernendenID)
+    // Prüfung erstellen (mit FachID)
     createExam: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
-            const { titel, beschreibung, prüfungsdatum, fach_id } = req.body;
+            const { titel, beschreibung, datum, fach_id } = req.body; // FachID wird vom Frontend übergeben
 
             const sql = `
-                INSERT INTO prüfung (lernender_id, titel, beschreibung, prüfungsdatum, fach_id)
+                INSERT INTO pruefung (lernender_id, titel, beschreibung, datum, fach_id)
                 VALUES (?, ?, ?, ?, ?)
             `;
-            const values = [lernenderId, titel, beschreibung, prüfungsdatum, fach_id];
+            const values = [lernenderId, titel, beschreibung, datum, fach_id]; 
             await pool.query(sql, values);
 
             res.status(201).json({ message: "Prüfung erfolgreich erstellt." });
@@ -41,10 +40,12 @@ const examController = {
         }
     },
 
-    // Alle Prüfungen abrufen
-    getExams: async (req, res) => {
+    // Alle Prüfungen für einen Lernenden abrufen
+    getExamsByLernenderId: async (req, res) => {
         try {
-            const [exams] = await pool.query("SELECT * FROM prüfung");
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const [exams] = await pool.query("SELECT * FROM pruefung WHERE lernender_id = ?", [lernenderId]);
+
             res.json({ data: exams });
         } catch (error) {
             console.error("Fehler beim Abrufen der Prüfungen:", error);
@@ -56,8 +57,8 @@ const examController = {
     getExamById: async (req, res) => {
         try {
             const { examId } = req.params;
-            const lernenderId = req.user.id; // Authentifizierter Lernender
-            const [exam] = await pool.query("SELECT * FROM prüfung WHERE id = ? AND lernender_id = ?", [examId, lernenderId]);
+            const lernenderId = req.user.id;
+            const [exam] = await pool.query("SELECT * FROM pruefung WHERE id = ? AND lernender_id = ?", [examId, lernenderId]);
 
             if (exam.length === 0) {
                 return res.status(404).json({ error: "Prüfung nicht gefunden oder nicht autorisiert." });
@@ -74,15 +75,15 @@ const examController = {
     updateExam: async (req, res) => {
         try {
             const { examId } = req.params;
-            const { titel, beschreibung, prüfungsdatum, fach_id } = req.body;
-            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const { titel, beschreibung, datum, fach_id } = req.body;
+            const lernenderId = req.user.id;
 
             const sql = `
-                UPDATE prüfung
-                SET titel = ?, beschreibung = ?, prüfungsdatum = ?, fach_id = ?
+                UPDATE pruefung
+                SET titel = ?, beschreibung = ?, datum = ?, fach_id = ?
                 WHERE id = ? AND lernender_id = ?
             `;
-            const values = [titel, beschreibung, prüfungsdatum, fach_id, examId, lernenderId];
+            const values = [titel, beschreibung, datum, fach_id, examId, lernenderId];
             await pool.query(sql, values);
 
             res.status(200).json({ message: "Prüfung erfolgreich aktualisiert." });
@@ -96,10 +97,10 @@ const examController = {
     deleteExam: async (req, res) => {
         try {
             const { examId } = req.params;
-            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const lernenderId = req.user.id;
 
             const sql = `
-                DELETE FROM prüfung
+                DELETE FROM pruefung
                 WHERE id = ? AND lernender_id = ?
             `;
             const values = [examId, lernenderId];
@@ -112,19 +113,5 @@ const examController = {
         }
     }
 };
-
-// Cron-Job zum automatischen Löschen von abgelaufenen Prüfungen
-cron.schedule('0 0 * * *', async () => {
-    try {
-        const sql = `
-            DELETE FROM prüfung
-            WHERE prüfungsdatum < NOW()
-        `;
-        await pool.query(sql);
-        console.log('Abgelaufene Prüfungen wurden gelöscht.');
-    } catch (error) {
-        console.error('Fehler beim Löschen der abgelaufenen Prüfungen:', error);
-    }
-});
 
 module.exports = examController;
