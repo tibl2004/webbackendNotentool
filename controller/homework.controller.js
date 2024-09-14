@@ -2,11 +2,11 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const pool = require('../database/index'); // Pool zur Datenbankverbindung
 
-const examController = {
-    // Authentifizierungsmiddleware
+const homeworkController = {
+    // Authentifizierungsmiddleware zum Verifizieren des JWT-Tokens
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; 
+        const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token aus dem Authorization Header
 
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
 
@@ -15,103 +15,103 @@ const examController = {
                 console.error('Token Überprüfung Fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user; 
+            req.user = user; // Setze die Benutzerinformationen aus dem Token
             next();
         });
     },
 
-    // Prüfung erstellen (mit FachID)
-    createExam: async (req, res) => {
+    // Hausaufgabe erstellen (mit FachID)
+    createHomework: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
-            const { titel, beschreibung, datum, fach_id } = req.body; // FachID wird vom Frontend übergeben
+            const { titel, beschreibung, abgabedatum, fach_id } = req.body; // FachID wird vom Frontend übergeben
 
             const sql = `
-                INSERT INTO pruefung (lernender_id, titel, beschreibung, datum, fach_id)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, erledigt, fach_id)
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
-            const values = [lernenderId, titel, beschreibung, datum, fach_id]; 
+            const values = [lernenderId, titel, beschreibung, abgabedatum, false, fach_id]; // FachID wird gespeichert
             await pool.query(sql, values);
 
-            res.status(201).json({ message: "Prüfung erfolgreich erstellt." });
+            res.status(201).json({ message: "Hausaufgabe erfolgreich erstellt." });
         } catch (error) {
-            console.error("Fehler beim Erstellen der Prüfung:", error);
-            res.status(500).json({ error: "Fehler beim Erstellen der Prüfung." });
+            console.error("Fehler beim Erstellen der Hausaufgabe:", error);
+            res.status(500).json({ error: "Fehler beim Erstellen der Hausaufgabe." });
         }
     },
 
-    // Alle Prüfungen für einen Lernenden abrufen
-    getExamsByLernenderId: async (req, res) => {
+    // Alle Hausaufgaben für einen Lernenden abrufen
+    getHomeworksByLernenderId: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
-            const [exams] = await pool.query("SELECT * FROM pruefung WHERE lernender_id = ?", [lernenderId]);
+            const [homeworks] = await pool.query("SELECT * FROM hausaufgabe WHERE lernender_id = ?", [lernenderId]);
 
-            res.json({ data: exams });
+            res.json({ data: homeworks }); // Enthält auch die FachID
         } catch (error) {
-            console.error("Fehler beim Abrufen der Prüfungen:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Prüfungen." });
+            console.error("Fehler beim Abrufen der Hausaufgaben:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Hausaufgaben." });
         }
     },
 
-    // Prüfung nach ID abrufen
-    getExamById: async (req, res) => {
+    // Hausaufgabe nach ID abrufen
+    getHomeworkById: async (req, res) => {
         try {
-            const { examId } = req.params;
-            const lernenderId = req.user.id;
-            const [exam] = await pool.query("SELECT * FROM pruefung WHERE id = ? AND lernender_id = ?", [examId, lernenderId]);
+            const { homeworkId } = req.params;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const [homework] = await pool.query("SELECT * FROM hausaufgabe WHERE id = ? AND lernender_id = ?", [homeworkId, lernenderId]);
 
-            if (exam.length === 0) {
-                return res.status(404).json({ error: "Prüfung nicht gefunden oder nicht autorisiert." });
+            if (homework.length === 0) {
+                return res.status(404).json({ error: "Hausaufgabe nicht gefunden oder nicht autorisiert." });
             }
 
-            res.json({ data: exam[0] });
+            res.json({ data: homework[0] });
         } catch (error) {
-            console.error("Fehler beim Abrufen der Prüfung:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Prüfung." });
+            console.error("Fehler beim Abrufen der Hausaufgabe:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Hausaufgabe." });
         }
     },
 
-    // Prüfung aktualisieren
-    updateExam: async (req, res) => {
+    // Hausaufgabe aktualisieren (Erledigt-Status)
+    updateHomeworkStatus: async (req, res) => {
         try {
-            const { examId } = req.params;
-            const { titel, beschreibung, datum, fach_id } = req.body;
-            const lernenderId = req.user.id;
+            const { homeworkId } = req.params;
+            const { erledigt } = req.body;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
 
             const sql = `
-                UPDATE pruefung
-                SET titel = ?, beschreibung = ?, datum = ?, fach_id = ?
+                UPDATE hausaufgabe
+                SET erledigt = ?
                 WHERE id = ? AND lernender_id = ?
             `;
-            const values = [titel, beschreibung, datum, fach_id, examId, lernenderId];
+            const values = [erledigt, homeworkId, lernenderId];
             await pool.query(sql, values);
 
-            res.status(200).json({ message: "Prüfung erfolgreich aktualisiert." });
+            res.status(200).json({ message: "Hausaufgabe erfolgreich aktualisiert." });
         } catch (error) {
-            console.error("Fehler beim Aktualisieren der Prüfung:", error);
-            res.status(500).json({ error: "Fehler beim Aktualisieren der Prüfung." });
+            console.error("Fehler beim Aktualisieren der Hausaufgabe:", error);
+            res.status(500).json({ error: "Fehler beim Aktualisieren der Hausaufgabe." });
         }
     },
 
-    // Prüfung löschen
-    deleteExam: async (req, res) => {
+    // Hausaufgabe löschen
+    deleteHomework: async (req, res) => {
         try {
-            const { examId } = req.params;
-            const lernenderId = req.user.id;
+            const { homeworkId } = req.params;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
 
             const sql = `
-                DELETE FROM pruefung
+                DELETE FROM hausaufgabe
                 WHERE id = ? AND lernender_id = ?
             `;
-            const values = [examId, lernenderId];
+            const values = [homeworkId, lernenderId];
             await pool.query(sql, values);
 
-            res.status(200).json({ message: "Prüfung erfolgreich gelöscht." });
+            res.status(200).json({ message: "Hausaufgabe erfolgreich gelöscht." });
         } catch (error) {
-            console.error("Fehler beim Löschen der Prüfung:", error);
-            res.status(500).json({ error: "Fehler beim Löschen der Prüfung." });
+            console.error("Fehler beim Löschen der Hausaufgabe:", error);
+            res.status(500).json({ error: "Fehler beim Löschen der Hausaufgabe." });
         }
     }
 };
 
-module.exports = examController;
+module.exports = homeworkController;
