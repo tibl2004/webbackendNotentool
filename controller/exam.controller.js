@@ -53,6 +53,18 @@ const examController = {
         }
     },
 
+    // Alle Prüfungen abrufen (mit Authentifizierung)
+    getExams: async (req, res) => {
+        try {
+            const [exams] = await pool.query("SELECT * FROM pruefung");
+
+            res.json({ data: exams });
+        } catch (error) {
+            console.error("Fehler beim Abrufen aller Prüfungen:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen aller Prüfungen." });
+        }
+    },
+
     // Prüfung nach ID abrufen
     getExamById: async (req, res) => {
         try {

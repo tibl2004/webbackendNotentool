@@ -1,21 +1,23 @@
 const express = require('express');
-const examController = require('../controller/exam.controller'); // Pfad zum Controller anpassen
-
+const examController = require('../controller/exam.controller');
 const router = express.Router();
-
-// Prüfung hinzufügen (mit Authentifizierung)
-router.post('/', examController.authenticateToken, examController.createExam);
 
 // Alle Prüfungen abrufen (mit Authentifizierung)
 router.get('/', examController.authenticateToken, examController.getExams);
 
-// Prüfung anhand der ID abrufen (mit Authentifizierung)
+// Prüfung erstellen
+router.post('/', examController.authenticateToken, examController.createExam);
+
+// Alle Prüfungen für einen Lernenden abrufen
+router.get('/exams/:lernenderId', examController.authenticateToken, examController.getExamsByLernenderId);
+
+// Prüfung nach ID abrufen
 router.get('/:examId', examController.authenticateToken, examController.getExamById);
 
-// Prüfung aktualisieren (mit Authentifizierung)
+// Prüfung aktualisieren
 router.put('/:examId', examController.authenticateToken, examController.updateExam);
 
-// Prüfung löschen (mit Authentifizierung)
+// Prüfung löschen
 router.delete('/:examId', examController.authenticateToken, examController.deleteExam);
 
 module.exports = router;
