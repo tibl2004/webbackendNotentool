@@ -97,11 +97,14 @@ const educationController = {
         }
     },
 
-    // Lernenden-Registrierung
+    // Lehrbetrieb kann Lernende hinzufügen
     registerLernender: async (req, res) => {
         try {
-            const berufsbildnerId = req.user.id; // Authentifizierter Berufsbildner
             const { benutzername, passwort, name, vorname, beruf, berufsschule } = req.body;
+
+            if (req.user.userType !== 'lehrbetrieb') {
+                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb kann Lernende hinzufügen.' });
+            }
 
             const [existingLernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
             if (existingLernender.length > 0) {
@@ -110,10 +113,10 @@ const educationController = {
 
             const hashedPassword = await bcrypt.hash(passwort, 10);
             const sql = `
-                INSERT INTO lernender (berufsbildner_id, benutzername, passwort, name, vorname, beruf, berufsschule)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO lernender (benutzername, passwort, name, vorname, beruf, berufsschule)
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
-            const values = [berufsbildnerId, benutzername, hashedPassword, name, vorname, beruf, berufsschule];
+            const values = [benutzername, hashedPassword, name, vorname, beruf, berufsschule];
             await pool.query(sql, values);
 
             res.status(201).json({ message: "Lernender erfolgreich registriert." });
@@ -264,13 +267,16 @@ getLernende: async (req, res) => {
         }
     },
 
-    // Fach hinzufügen für den authentifizierten Lernenden
+// Lehrbetrieb und Berufsbildner können Fächer hinzufügen
 addFach: async (req, res) => {
     try {
-        const lernenderId = req.user.id; // Lernenden-ID aus dem Token entnehmen
-        const { fachname } = req.body;
+        const { lernenderId, fachname } = req.body; // Lernender ID und Fachname aus dem Request-Body
 
-        // Einfügen des neuen Fachs für den authentifizierten Lernenden
+        // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
+        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Fächer hinzufügen.' });
+        }
+
         const sql = `
             INSERT INTO fach (lernender_id, fachname)
             VALUES (?, ?)
@@ -322,26 +328,30 @@ getLernenderById: async (req, res) => {
 
 
 
-    // Note hinzufügen
-    addNote: async (req, res) => {
-        try {
-            const fachId = req.params.fachId; // Fach-ID aus URL-Parametern
-            const { note } = req.body;
+   // Lehrbetrieb und Berufsbildner können Noten hinzufügen
+   addNote: async (req, res) => {
+    try {
+        const { fachId, note } = req.body; // Fach-ID und Note aus dem Request-Body
 
-            const sql = `
-                UPDATE fach 
-                SET note = ?
-                WHERE id = ?
-            `;
-            const values = [note, fachId];
-            await pool.query(sql, values);
-
-            res.status(200).json({ message: "Note erfolgreich hinzugefügt." });
-        } catch (error) {
-            console.error("Fehler beim Hinzufügen der Note:", error);
-            res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+        // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
+        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Noten hinzufügen.' });
         }
-    },
+
+        const sql = `
+            UPDATE fach 
+            SET note = ?
+            WHERE id = ?
+        `;
+        const values = [note, fachId];
+        await pool.query(sql, values);
+
+        res.status(200).json({ message: "Note erfolgreich hinzugefügt." });
+    } catch (error) {
+        console.error("Fehler beim Hinzufügen der Note:", error);
+        res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+    }
+},
 
     // Fach aktualisieren
     updateFach: async (req, res) => {

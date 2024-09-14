@@ -21,16 +21,17 @@ const examController = {
         });
     },
 
-    // Prüfung erstellen
+    // Prüfung erstellen (mit LernendenID)
     createExam: async (req, res) => {
         try {
+            const lernenderId = req.user.id; // Authentifizierter Lernender
             const { titel, beschreibung, prüfungsdatum, fach_id } = req.body;
 
             const sql = `
-                INSERT INTO prüfung (titel, beschreibung, prüfungsdatum, fach_id)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO prüfung (lernender_id, titel, beschreibung, prüfungsdatum, fach_id)
+                VALUES (?, ?, ?, ?, ?)
             `;
-            const values = [titel, beschreibung, prüfungsdatum, fach_id];
+            const values = [lernenderId, titel, beschreibung, prüfungsdatum, fach_id];
             await pool.query(sql, values);
 
             res.status(201).json({ message: "Prüfung erfolgreich erstellt." });
@@ -55,10 +56,11 @@ const examController = {
     getExamById: async (req, res) => {
         try {
             const { examId } = req.params;
-            const [exam] = await pool.query("SELECT * FROM prüfung WHERE id = ?", [examId]);
+            const lernenderId = req.user.id; // Authentifizierter Lernender
+            const [exam] = await pool.query("SELECT * FROM prüfung WHERE id = ? AND lernender_id = ?", [examId, lernenderId]);
 
             if (exam.length === 0) {
-                return res.status(404).json({ error: "Prüfung nicht gefunden." });
+                return res.status(404).json({ error: "Prüfung nicht gefunden oder nicht autorisiert." });
             }
 
             res.json({ data: exam[0] });
@@ -73,13 +75,14 @@ const examController = {
         try {
             const { examId } = req.params;
             const { titel, beschreibung, prüfungsdatum, fach_id } = req.body;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
 
             const sql = `
                 UPDATE prüfung
                 SET titel = ?, beschreibung = ?, prüfungsdatum = ?, fach_id = ?
-                WHERE id = ?
+                WHERE id = ? AND lernender_id = ?
             `;
-            const values = [titel, beschreibung, prüfungsdatum, fach_id, examId];
+            const values = [titel, beschreibung, prüfungsdatum, fach_id, examId, lernenderId];
             await pool.query(sql, values);
 
             res.status(200).json({ message: "Prüfung erfolgreich aktualisiert." });
@@ -93,12 +96,13 @@ const examController = {
     deleteExam: async (req, res) => {
         try {
             const { examId } = req.params;
+            const lernenderId = req.user.id; // Authentifizierter Lernender
 
             const sql = `
                 DELETE FROM prüfung
-                WHERE id = ?
+                WHERE id = ? AND lernender_id = ?
             `;
-            const values = [examId];
+            const values = [examId, lernenderId];
             await pool.query(sql, values);
 
             res.status(200).json({ message: "Prüfung erfolgreich gelöscht." });
