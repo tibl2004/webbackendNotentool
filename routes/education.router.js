@@ -51,5 +51,11 @@ router.delete('/lernender/:lernenderId/fach/:fachId/note', educationController.a
 // Route zum Abrufen eines Lernenden anhand der ID
 router.get('/lernende/:id', educationController.getLernenderById);
 
+// Route zum Abrufen der Noten für ein bestimmtes Fach
+router.get('/fach/:fachId/noten', educationController.authenticateToken, educationController.getNotenFuerFach);
+
+module.exports = router;
+
+
 
 module.exports = router;

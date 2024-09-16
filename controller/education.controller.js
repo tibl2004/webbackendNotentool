@@ -205,26 +205,24 @@ const educationController = {
         }
     },
 
-    // Lernende mit Fächern abrufen
-    getLernendeMitFaecher: async (req, res) => {
-        try {
-            const berufsbildnerId = req.user.id;
-            const [lernende] = await pool.query("SELECT * FROM lernender WHERE berufsbildner_id = ?", [berufsbildnerId]);
+   // Lernende mit ihren Fächern abrufen (Authentifizierung erforderlich)
+getLernendeMitFaecher: async (req, res) => {
+    try {
+        const lernenderId = req.user.id; // Die Lernenden-ID aus dem authentifizierten Token entnehmen (angenommen, es handelt sich um einen Lernenden)
 
-            const lernendeMitFaecher = await Promise.all(lernende.map(async (lernender) => {
-                const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernender.id]);
-                return {
-                    ...lernender,
-                    faecher
-                };
-            }));
+        // Abrufen aller Fächer, die dem Lernenden zugeordnet sind
+        const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernenderId]);
 
-            res.json({ data: lernendeMitFaecher });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Lernenden mit Fächern:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Lernenden mit Fächern." });
+        if (faecher.length === 0) {
+            return res.status(404).json({ message: "Keine Fächer gefunden." });
         }
-    },
+
+        res.status(200).json({ data: faecher });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Fächer:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
+    }
+},
 
     // Lernende abrufen (mit Authentifizierung)
 getLernende: async (req, res) => {
@@ -323,6 +321,45 @@ getLernenderById: async (req, res) => {
     } catch (error) {
         console.error("Fehler beim Abrufen des Lernenden:", error);
         res.status(500).json({ error: "Fehler beim Abrufen des Lernenden." });
+    }
+},
+
+// Lernende mit Fächern und Noten abrufen
+getLernendeMitFaecherUndNoten: async (req, res) => {
+    try {
+        const berufsbildnerId = req.user.id; // Authentifizierter Berufsbildner
+
+        // Alle Lernenden, die dem Berufsbildner zugeordnet sind, abrufen
+        const [lernende] = await pool.query("SELECT * FROM lernender WHERE berufsbildner_id = ?", [berufsbildnerId]);
+
+        if (lernende.length === 0) {
+            return res.status(404).json({ message: "Keine Lernenden gefunden." });
+        }
+
+        // Fächer und Noten für jeden Lernenden abrufen
+        const lernendeMitFaecherUndNoten = await Promise.all(lernende.map(async (lernender) => {
+            // Fächer für jeden Lernenden abrufen
+            const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernender.id]);
+
+            // Noten für jedes Fach abrufen
+            const faecherMitNoten = await Promise.all(faecher.map(async (fach) => {
+                const [noten] = await pool.query("SELECT * FROM note WHERE fach_id = ?", [fach.id]);
+                return {
+                    ...fach,
+                    noten
+                };
+            }));
+
+            return {
+                ...lernender,
+                faecher: faecherMitNoten
+            };
+        }));
+
+        res.json({ data: lernendeMitFaecherUndNoten });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Lernenden mit Fächern und Noten:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Lernenden mit Fächern und Noten." });
     }
 },
 
