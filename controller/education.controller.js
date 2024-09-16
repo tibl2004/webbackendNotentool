@@ -383,31 +383,31 @@ getLernendeMitFaecherUndNoten: async (req, res) => {
 
 
 
-    // Noten hinzufügen
-    addNote: async (req, res) => {
-        try {
-            const { titel, note } = req.body; // Titel und Note aus dem Request-Body
-            const fachId = req.params.fachId; // Fach-ID aus der URL
-            const lernenderId = req.user.id; // Lernenden-ID aus dem Token
+   // Noten hinzufügen
+addNote: async (req, res) => {
+    try {
+        const { titel, note } = req.body; // Titel und Note aus dem Request-Body
+        const fachId = req.params.fachId; // Fach-ID aus der URL
+        const lernenderId = req.user.id; // Lernenden-ID aus dem Token
 
-            // Überprüfen, ob der Benutzer berechtigt ist, Noten hinzuzufügen
-            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
-                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Noten hinzufügen.' });
-            }
-
-            const sql = `
-                INSERT INTO note (fach_id, titel, note, lernender_id)
-                VALUES (?, ?, ?, ?)
-            `;
-            const values = [fachId, titel, note, lernenderId];
-            await pool.query(sql, values);
-
-            res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
-        } catch (error) {
-            console.error("Fehler beim Hinzufügen der Note:", error);
-            res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+        // Überprüfen, ob der Benutzer berechtigt ist, Noten hinzuzufügen
+        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
         }
-    },
+
+        const sql = `
+            INSERT INTO note (fach_id, titel, note, lernender_id)
+            VALUES (?, ?, ?, ?)
+        `;
+        const values = [fachId, titel, note, lernenderId];
+        await pool.query(sql, values);
+
+        res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
+    } catch (error) {
+        console.error("Fehler beim Hinzufügen der Note:", error);
+        res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+    }
+},
 
 
     // Fach aktualisieren
