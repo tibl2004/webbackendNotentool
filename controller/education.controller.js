@@ -452,23 +452,20 @@ addNote: async (req, res) => {
 
     deleteNote: async (req, res) => {
         try {
-            const { lernenderId, fachId, id } = req.params;
+            const { noteId } = req.params; // Noten-ID aus den URL-Parametern
     
-            // Überprüfen, ob die Note existiert und der Lernende die Berechtigung hat, sie zu löschen
-            const [note] = await pool.query(
-                "SELECT * FROM noten WHERE id = ? AND fach_id = ? AND lernender_id = ?",
-                [id, fachId, lernenderId]
-            );
-    
-            if (note.length === 0) {
-                return res.status(404).json({ error: "Note nicht gefunden oder keine Berechtigung." });
-            }
-    
-            // Lösche die Note aus der Datenbank
-            const result = await pool.query("DELETE FROM noten WHERE id = ?", [id]);
+            
+        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
+        }
+            const sql = `
+                DELETE FROM note WHERE id = ?
+            `;
+            const values = [noteId];
+            const result = await pool.query(sql, values);
     
             if (result.affectedRows === 0) {
-                return res.status(404).json({ error: "Note konnte nicht gelöscht werden." });
+                return res.status(404).json({ message: "Note nicht gefunden." });
             }
     
             res.status(200).json({ message: "Note erfolgreich gelöscht." });
