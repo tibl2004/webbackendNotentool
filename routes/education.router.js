@@ -37,7 +37,7 @@ router.put('/lernender/:lernenderId/fach/:fachId', educationController.authentic
 router.get('/lernender/:lernenderId/faecher', educationController.authenticateToken, educationController.getLernendeMitFaecher);
 
 // Note hinzufügen (mit Authentifizierung) und lernenderId in der URL
-router.post('/lernender/:lernenderId/fach/:fachId/note', educationController.authenticateToken, educationController.addNote);
+router.post('/lernende/:lernenderId/fach/:fachId/noten', educationController.authenticateToken, educationController.addNote);
 
 // Note aktualisieren (mit Authentifizierung) und lernenderId in der URL
 router.put('/lernender/:lernenderId/fach/:fachId/note', educationController.authenticateToken, educationController.updateNote);
