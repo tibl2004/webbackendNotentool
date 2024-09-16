@@ -54,7 +54,7 @@ router.get('/lernende/:id', educationController.getLernenderById);
 // Route zum Abrufen der Noten für ein bestimmtes Fach eines Lernenden
 router.get('/lernende/:lernenderId/fach/:fachId/noten', educationController.authenticateToken, educationController.getNotenFuerFach);
 
-module.exports = router;
+
 
 
 

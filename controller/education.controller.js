@@ -450,25 +450,30 @@ addNote: async (req, res) => {
         }
     },
 
-    // Note löschen
     deleteNote: async (req, res) => {
         try {
-            const { fachId } = req.params;
-
-            const sql = `
-                UPDATE fach
-                SET note = NULL
-                WHERE id = ?
-            `;
-            const values = [fachId];
-            await pool.query(sql, values);
-
+            const { lernenderId, fachId, id } = req.params; // Die ID der Note wird aus den URL-Parametern extrahiert
+    
+            // Überprüfen, ob der Lernende die Berechtigung hat, diese Note zu löschen
+            const [note] = await pool.query(
+                "SELECT * FROM noten WHERE id = ? AND fach_id = ? AND lernender_id = ?",
+                [id, fachId, lernenderId]
+            );
+    
+            if (note.length === 0) {
+                return res.status(404).json({ error: "Note nicht gefunden oder keine Berechtigung." });
+            }
+    
+            // Lösche die Note aus der Datenbank
+            await pool.query("DELETE FROM noten WHERE id = ?", [id]);
+    
             res.status(200).json({ message: "Note erfolgreich gelöscht." });
         } catch (error) {
             console.error("Fehler beim Löschen der Note:", error);
             res.status(500).json({ error: "Fehler beim Löschen der Note." });
         }
     }
+    
 };
 
 module.exports = educationController;
