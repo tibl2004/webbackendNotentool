@@ -408,6 +408,7 @@ addNote: async (req, res) => {
 
 
 
+
     // Fach aktualisieren
     updateFach: async (req, res) => {
         try {
@@ -429,26 +430,41 @@ addNote: async (req, res) => {
         }
     },
 
-    // Note aktualisieren
-    updateNote: async (req, res) => {
+    editNote: async (req, res) => {
         try {
-            const { fachId } = req.params;
-            const { note } = req.body;
-
+            const { noteId } = req.params; // Note-ID aus den URL-Parametern
+            const { titel, note } = req.body; // Titel und neue Note aus dem Request-Body
+            const lernenderId = req.user.id; // Lernender-ID aus dem Token des angemeldeten Benutzers
+    
+            // Überprüfen, ob der Benutzer die erforderlichen Berechtigungen hat
+            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
+                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten bearbeiten.' });
+            }
+    
+            // SQL-Abfrage zum Aktualisieren der Note
             const sql = `
-                UPDATE fach 
-                SET note = ?
-                WHERE id = ?
+                UPDATE note 
+                SET titel = ?, note = ? 
+                WHERE id = ? AND lernender_id = ? AND fach_id = ?
             `;
-            const values = [note, fachId];
-            await pool.query(sql, values);
-
+            const values = [titel, note, noteId, lernenderId, req.params.fachId]; // Werte für die Abfrage
+    
+            // Führe die Aktualisierung durch
+            const [result] = await pool.query(sql, values);
+    
+            // Überprüfe, ob eine Note aktualisiert wurde
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Note nicht gefunden oder keine Berechtigung zur Bearbeitung." });
+            }
+    
+            // Erfolgsantwort senden
             res.status(200).json({ message: "Note erfolgreich aktualisiert." });
         } catch (error) {
-            console.error("Fehler beim Aktualisieren der Note:", error);
-            res.status(500).json({ error: "Fehler beim Aktualisieren der Note." });
+            console.error("Fehler beim Bearbeiten der Note:", error); // Ausgabe des Fehlerdetails
+            res.status(500).json({ error: "Fehler beim Bearbeiten der Note." });
         }
     },
+    
 
     deleteNote: async (req, res) => {
         try {
