@@ -31,12 +31,10 @@ router.post('/lernende/:lernenderId/fach', educationController.authenticateToken
 // Fach aktualisieren (mit Authentifizierung) und lernenderId in der URL
 router.put('/lernender/:lernenderId/fach/:fachId', educationController.authenticateToken, educationController.updateFach);
 
-// Fach abrufen (mit Authentifizierung) und lernenderId in der URL
-router.get('/lernender/:lernenderId/faecher', educationController.authenticateToken, educationController.getLernendeMitFaecher);
 
 
 // Endpunkt zum Abrufen der Fächer eines Lernenden (ohne Noten)
-router.get('/lernende/:lernenderId/faecher', educationController.getFaecherFuerLernender);
+router.get('/lernende/:lernenderId/faecher', educationController.getLernendeMitFaecher);
 
 
 // Route zum Abrufen eines Lernenden anhand der ID
