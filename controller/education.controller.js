@@ -362,24 +362,27 @@ getLernendeMitFaecherUndNoten: async (req, res) => {
         res.status(500).json({ error: "Fehler beim Abrufen der Lernenden mit Fächern und Noten." });
     }
 },
-// Noten für ein bestimmtes Fach abrufen
 getNotenFuerFach: async (req, res) => {
     try {
-        const { fachId } = req.params; // Fach-ID aus URL-Parametern
+        const { fachId, lernenderId } = req.params; // Fach-ID und Lernender-ID aus URL-Parametern
 
-        // Abrufen der Noten für das angegebene Fach
-        const [noten] = await pool.query("SELECT * FROM note WHERE fach_id = ?", [fachId]);
+        // Abrufen der Noten für das angegebene Fach und den Lernenden
+        const [noten] = await pool.query(
+            "SELECT * FROM note WHERE fach_id = ? AND lernender_id = ?",
+            [fachId, lernenderId]
+        );
 
         if (noten.length === 0) {
-            return res.status(404).json({ message: "Keine Noten für dieses Fach gefunden." });
+            return res.status(404).json({ message: "Keine Noten für dieses Fach und diesen Lernenden gefunden." });
         }
 
         res.status(200).json({ data: noten });
     } catch (error) {
-        console.error("Fehler beim Abrufen der Noten für das Fach:", error);
-        res.status(500).json({ error: "Fehler beim Abrufen der Noten für das Fach." });
+        console.error("Fehler beim Abrufen der Noten für das Fach und den Lernenden:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Noten für das Fach und den Lernenden." });
     }
 },
+
 
 
 
