@@ -16,6 +16,12 @@ router.post('/login', educationController.login);
 router.get('/lehrbetriebe', educationController.authenticateToken, educationController.getLehrbetriebe);
 router.get('/lernende', educationController.authenticateToken, educationController.getLernende);
 
+// Routen zu Lernenden mit Noten in den Fächer
+router.get('/lernende/:lernenderId/fach/:fachId/noten', educationController.authenticateToken, educationController.getNotenFuerFach);
+router.post('/lernende/:lernenderId/fach/:fachId/noten', educationController.authenticateToken, educationController.addNote);
+router.put('/lernende/:lernenderId/fach/:fachId/noten/:noteId', educationController.authenticateToken, educationController.editNote); // Token-Authentifizierung sicherstelleneducationController.editNote // Die Funktion aufrufen);
+router.delete('/lernende/:lernenderId/fach/:fachId/noten/:noteId', educationController.authenticateToken, educationController.deleteNote);
+
 // Lernenden aktualisieren (mit Authentifizierung)
 router.put('/lernender/:lernenderId', educationController.authenticateToken, educationController.updateLernender);
 
@@ -29,19 +35,9 @@ router.put('/lernender/:lernenderId/fach/:fachId', educationController.authentic
 router.get('/lernender/:lernenderId/faecher', educationController.authenticateToken, educationController.getLernendeMitFaecher);
 
 
-
-// Note aktualisieren (mit Authentifizierung) und lernenderId in der URL
-router.put('/lernender/:lernenderId/fach/:fachId/note', educationController.authenticateToken, educationController.updateNote);
-
 // Endpunkt zum Abrufen der Fächer eines Lernenden (ohne Noten)
 router.get('/lernende/:lernenderId/faecher', educationController.getFaecherFuerLernender);
 
-
-// Routen zu Lernenden mit Noten in den Fächer
-router.get('/lernende/:lernenderId/fach/:fachId/noten', educationController.authenticateToken, educationController.getNotenFuerFach);
-router.post('/lernende/:lernenderId/fach/:fachId/noten', educationController.authenticateToken, educationController.addNote);
-router.put('/lernende/:lernenderId/fach/:fachId/noten/:noteId', educationController.authenticateToken, educationController.editNote);
-router.delete('/lernende/:lernenderId/fach/:fachId/noten/:noteId', educationController.authenticateToken, educationController.deleteNote);
 
 // Route zum Abrufen eines Lernenden anhand der ID
 router.get('/lernende/:id', educationController.getLernenderById);

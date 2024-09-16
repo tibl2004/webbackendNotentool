@@ -429,11 +429,11 @@ addNote: async (req, res) => {
             res.status(500).json({ error: "Fehler beim Aktualisieren des Fachs." });
         }
     },
-
+    
     editNote: async (req, res) => {
         try {
             const { noteId } = req.params; // Note-ID aus den URL-Parametern
-            const { titel, note } = req.body; // Titel und neue Note aus dem Request-Body
+            const { titel, note } = req.body; // Titel und Note aus dem Request-Body
             const lernenderId = req.user.id; // Lernender-ID aus dem Token des angemeldeten Benutzers
     
             // Überprüfen, ob der Benutzer die erforderlichen Berechtigungen hat
