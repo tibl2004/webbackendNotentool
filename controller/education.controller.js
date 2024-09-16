@@ -205,37 +205,23 @@ const educationController = {
         }
     },
 
-   // Lernende mit ihren Fächern abrufen (Authentifizierung erforderlich)
-getLernendeMitFaecher: async (req, res) => {
-    try {
-        const lernenderId = req.user.id; // Die Lernenden-ID aus dem authentifizierten Token entnehmen (angenommen, es handelt sich um einen Lernenden)
-
-        // Abrufen aller Fächer und der durchschnittlichen Noten für den Lernenden
-        const [faecher] = await pool.query(`
-            SELECT 
-                fach.id AS fach_id,
-                fach.name AS fach_name,
-                AVG(note.note) AS durchschnitt_note
-            FROM 
-                fach
-            LEFT JOIN 
-                note ON fach.id = note.fach_id
-            WHERE 
-                fach.lernender_id = ?
-            GROUP BY 
-                fach.id
-        `, [lernenderId]);
-
-        if (faecher.length === 0) {
-            return res.status(404).json({ message: "Keine Fächer gefunden." });
+    getLernendeMitFaecher: async (req, res) => {
+        try {
+            const lernenderId = req.user.id; // Die Lernenden-ID aus dem authentifizierten Token entnehmen (angenommen, es handelt sich um einen Lernenden)
+    
+            // Abrufen aller Fächer, die dem Lernenden zugeordnet sind
+            const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernenderId]);
+    
+            if (faecher.length === 0) {
+                return res.status(404).json({ message: "Keine Fächer gefunden." });
+            }
+    
+            res.status(200).json({ data: faecher });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Fächer:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
         }
-
-        res.status(200).json({ data: faecher });
-    } catch (error) {
-        console.error("Fehler beim Abrufen der Fächer:", error);
-        res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
-    }
-},
+    }, 
 
 
     // Lernende abrufen (mit Authentifizierung)
