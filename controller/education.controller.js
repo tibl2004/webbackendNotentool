@@ -382,15 +382,12 @@ getLernendeMitFaecherUndNoten: async (req, res) => {
 },
 
 
-
-   // Noten hinzufügen
 addNote: async (req, res) => {
     try {
-        const { titel, note } = req.body; // Titel und Note aus dem Request-Body
-        const fachId = req.params.fachId; // Fach-ID aus der URL
-        const lernenderId = req.user.id; // Lernenden-ID aus dem Token
+        const { titel, note } = req.body;
+        const fachId = req.params.fachId;
+        const lernenderId = req.user.id;
 
-        // Überprüfen, ob der Benutzer berechtigt ist, Noten hinzuzufügen
         if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
             return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
         }
@@ -404,10 +401,11 @@ addNote: async (req, res) => {
 
         res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
     } catch (error) {
-        console.error("Fehler beim Hinzufügen der Note:", error);
+        console.error("Fehler beim Hinzufügen der Note:", error); // Ausgabe des Fehlerdetails
         res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
     }
 },
+
 
 
     // Fach aktualisieren
