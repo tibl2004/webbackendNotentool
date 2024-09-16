@@ -387,14 +387,13 @@ getNotenFuerFach: async (req, res) => {
 
 
 
-   // Lehrbetrieb und Berufsbildner können Noten hinzufügen
-   addNote: async (req, res) => {
+addNote: async (req, res) => {
     try {
         const { fachId, note } = req.body; // Fach-ID und Note aus dem Request-Body
 
-        // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
-        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
-            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Noten hinzufügen.' });
+        // Überprüfen, ob der Benutzer ein Lehrbetrieb, Berufsbildner oder Lernender ist
+        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
         }
 
         const sql = `
