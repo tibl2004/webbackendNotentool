@@ -454,28 +454,31 @@ addNote: async (req, res) => {
         try {
             const { noteId } = req.params; // Noten-ID aus den URL-Parametern
     
+            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
+                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
+            }
             
-        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
-            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
-        }
-            const sql = `
-                DELETE FROM note WHERE id = ?
-            `;
+            console.log(`Lösche Note mit ID: ${noteId}`); // Logging für Debugging
+    
+            const sql = 'DELETE FROM note WHERE id = ?';
             const values = [noteId];
             const result = await pool.query(sql, values);
+            
+            console.log('Lösch-Resultat:', result); // Logging für Debugging
     
             if (result.affectedRows === 0) {
-                return res.status(404).json({ message: "Note nicht gefunden." });
+                return res.status(404).json({ message: 'Note nicht gefunden.' });
             }
     
-            res.status(200).json({ message: "Note erfolgreich gelöscht." });
+            res.status(200).json({ message: 'Note erfolgreich gelöscht.' });
         } catch (error) {
-            console.error("Fehler beim Löschen der Note:", error);
-            res.status(500).json({ error: "Fehler beim Löschen der Note." });
+            console.error('Fehler beim Löschen der Note:', error);
+            res.status(500).json({ error: 'Fehler beim Löschen der Note.' });
         }
     }
     
     
+
 };
 
 module.exports = educationController;
