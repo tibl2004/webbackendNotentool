@@ -378,10 +378,11 @@ getNotenFuerFach: async (req, res) => {
 
         res.status(200).json({ data: noten });
     } catch (error) {
-        console.error("Fehler beim Abrufen der Noten für das Fach und den Lernenden:", error);
-        res.status(500).json({ error: "Fehler beim Abrufen der Noten für das Fach und den Lernenden." });
+        console.error("Fehler beim Abrufen der Noten für das Fach und den Lernenden:", error.message, error.stack);
+        res.status(500).json({ error: `Fehler beim Abrufen der Noten: ${error.message}` });
     }
 },
+
 
 
 
