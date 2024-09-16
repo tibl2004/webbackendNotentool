@@ -362,54 +362,53 @@ getLernendeMitFaecherUndNoten: async (req, res) => {
         res.status(500).json({ error: "Fehler beim Abrufen der Lernenden mit Fächern und Noten." });
     }
 },
-getNotenFuerFach: async (req, res) => {
+ // Noten für ein Fach abrufen
+ getNotenFuerFach: async (req, res) => {
     try {
-        const { fachId, lernenderId } = req.params; // Fach-ID und Lernender-ID aus URL-Parametern
+        const { fachId } = req.params; // Fach-ID aus den URL-Parametern
 
-        // Abrufen der Noten für das angegebene Fach und den Lernenden
-        const [noten] = await pool.query(
-            "SELECT * FROM note WHERE fach_id = ? AND lernender_id = ?",
-            [fachId, lernenderId]
-        );
+        // Abrufen aller Noten für das angegebene Fach
+        const [noten] = await pool.query("SELECT * FROM note WHERE fach_id = ?", [fachId]);
 
         if (noten.length === 0) {
-            return res.status(404).json({ message: "Keine Noten für dieses Fach und diesen Lernenden gefunden." });
+            return res.status(404).json({ message: "Keine Noten gefunden." });
         }
 
         res.status(200).json({ data: noten });
     } catch (error) {
-        console.error("Fehler beim Abrufen der Noten für das Fach und den Lernenden:", error.message, error.stack);
-        res.status(500).json({ error: `Fehler beim Abrufen der Noten: ${error.message}` });
+        console.error("Fehler beim Abrufen der Noten:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Noten." });
     }
 },
 
 
 
+    // Noten hinzufügen
+    addNote: async (req, res) => {
+        try {
+            const { titel, note } = req.body; // Titel und Note aus dem Request-Body
+            const fachId = req.params.fachId; // Fach-ID aus der URL
+            const lernenderId = req.user.id; // Lernenden-ID aus dem Token
 
+            // Überprüfen, ob der Benutzer berechtigt ist, Noten hinzuzufügen
+            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
+                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Noten hinzufügen.' });
+            }
 
-addNote: async (req, res) => {
-    try {
-        const { fachId, note } = req.body; // Fach-ID und Note aus dem Request-Body
+            const sql = `
+                INSERT INTO note (fach_id, titel, note, lernender_id)
+                VALUES (?, ?, ?, ?)
+            `;
+            const values = [fachId, titel, note, lernenderId];
+            await pool.query(sql, values);
 
-        // Überprüfen, ob der Benutzer ein Lehrbetrieb, Berufsbildner oder Lernender ist
-        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
-            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
+            res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
+        } catch (error) {
+            console.error("Fehler beim Hinzufügen der Note:", error);
+            res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
         }
+    },
 
-        const sql = `
-            UPDATE fach 
-            SET note = ?
-            WHERE id = ?
-        `;
-        const values = [note, fachId];
-        await pool.query(sql, values);
-
-        res.status(200).json({ message: "Note erfolgreich hinzugefügt." });
-    } catch (error) {
-        console.error("Fehler beim Hinzufügen der Note:", error);
-        res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
-    }
-},
 
     // Fach aktualisieren
     updateFach: async (req, res) => {
