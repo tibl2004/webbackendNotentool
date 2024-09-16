@@ -45,7 +45,6 @@ router.put('/lernender/:lernenderId/fach/:fachId/note', educationController.auth
 // Endpunkt zum Abrufen der Fächer eines Lernenden (ohne Noten)
 router.get('/lernende/:lernenderId/faecher', educationController.getFaecherFuerLernender);
 
-// Note löschen (mit Authentifizierung) und lernenderId in der URL
 router.delete('/lernende/:lernenderId/fach/:fachId/noten/:id', educationController.authenticateToken, educationController.deleteNote);
 
 // Route zum Abrufen eines Lernenden anhand der ID

@@ -452,9 +452,9 @@ addNote: async (req, res) => {
 
     deleteNote: async (req, res) => {
         try {
-            const { lernenderId, fachId, id } = req.params; // Die ID der Note wird aus den URL-Parametern extrahiert
+            const { lernenderId, fachId, id } = req.params;
     
-            // Überprüfen, ob der Lernende die Berechtigung hat, diese Note zu löschen
+            // Überprüfen, ob die Note existiert und der Lernende die Berechtigung hat, sie zu löschen
             const [note] = await pool.query(
                 "SELECT * FROM noten WHERE id = ? AND fach_id = ? AND lernender_id = ?",
                 [id, fachId, lernenderId]
@@ -465,7 +465,11 @@ addNote: async (req, res) => {
             }
     
             // Lösche die Note aus der Datenbank
-            await pool.query("DELETE FROM noten WHERE id = ?", [id]);
+            const result = await pool.query("DELETE FROM noten WHERE id = ?", [id]);
+    
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Note konnte nicht gelöscht werden." });
+            }
     
             res.status(200).json({ message: "Note erfolgreich gelöscht." });
         } catch (error) {
@@ -473,6 +477,7 @@ addNote: async (req, res) => {
             res.status(500).json({ error: "Fehler beim Löschen der Note." });
         }
     }
+    
     
 };
 
