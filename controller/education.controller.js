@@ -186,7 +186,7 @@ const educationController = {
                 ...user // Alle anderen Benutzerinformationen hinzufügen
             };
     
-            const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '1h' });
+            const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '24h' });
             res.json({ token, userType });
         } catch (error) {
             console.error("Fehler beim Login:", error);
