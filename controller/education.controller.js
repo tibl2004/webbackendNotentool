@@ -4,17 +4,18 @@ const bcrypt = require('bcrypt');
 const pool = require('../database/index');
 
 const educationController = {
+    // Authentifizierungsmiddleware, um sicherzustellen, dass nur authentifizierte Benutzer Zugriff haben
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+        const token = authHeader && authHeader.split(' ')[1]; // Token aus dem Authorization Header holen
 
-        if (token == null) return res.sendStatus(401); // Kein Token vorhanden
+        if (token == null) return res.sendStatus(401); // Wenn kein Token vorhanden ist
 
-        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-            if (err) return res.sendStatus(403); // Token ungültig
-
-            req.user = user; // Benutzerdaten aus dem Token
-            next();
+        // JWT-Überprüfung mit hartcodiertem geheimen Schlüssel 'secretKey'
+        jwt.verify(token, 'secretKey', (err, user) => {
+            if (err) return res.sendStatus(403); // Wenn der Token ungültig ist
+            req.user = user; // Benutzerdaten aus dem Token anfordern
+            next(); // Weiter zur nächsten Middleware oder Route
         });
     },
 
@@ -159,22 +160,6 @@ registerLernender: async (req, res) => {
 
 
 
-    getLehrbetriebe: async (req, res) => {
-        try {
-            // Überprüfen, ob der authentifizierte Benutzer ein Admin ist
-            if (req.user.userType !== 'admin') {
-                return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe abrufen.' });
-            }
-
-            const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
-            res.json({ data: lehrbetriebe });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
-        }
-    },
-
-
     // Login für Admin, Berufsbildner, Lernende und Lehrbetrieb
     login: async (req, res) => {
         try {
@@ -227,37 +212,42 @@ registerLernender: async (req, res) => {
         }
     },
     
-
-    getLehrbetriebe: async (req, res) => {
-        try {
-            const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
-            res.json({ data: lehrbetriebe });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
+// Lehrbetriebe abrufen (mit Authentifizierung)
+getLehrbetriebe: async (req, res) => {
+    try {
+        // Überprüfen, ob der authentifizierte Benutzer ein Admin ist
+        if (req.user.userType !== 'admin') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe abrufen.' });
         }
-    },
 
-    getLernendeMitFaecher: async (req, res) => {
-        try {
-            const lernenderId = req.user.id; // Die Lernenden-ID aus dem authentifizierten Token entnehmen (angenommen, es handelt sich um einen Lernenden)
-    
-            // Abrufen aller Fächer, die dem Lernenden zugeordnet sind
-            const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernenderId]);
-    
-            if (faecher.length === 0) {
-                return res.status(404).json({ message: "Keine Fächer gefunden." });
-            }
-    
-            res.status(200).json({ data: faecher });
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Fächer:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
+        const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
+        res.json({ data: lehrbetriebe });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
+    }
+},
+
+// Lernende mit Fächern abrufen
+getLernendeMitFaecher: async (req, res) => {
+    try {
+        const lernenderId = req.user.id; // Die Lernenden-ID aus dem authentifizierten Token entnehmen (angenommen, es handelt sich um einen Lernenden)
+
+        // Abrufen aller Fächer, die dem Lernenden zugeordnet sind
+        const [faecher] = await pool.query("SELECT * FROM fach WHERE lernender_id = ?", [lernenderId]);
+
+        if (faecher.length === 0) {
+            return res.status(404).json({ message: "Keine Fächer gefunden." });
         }
-    }, 
 
+        res.status(200).json({ data: faecher });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Fächer:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
+    }
+},
 
-    // Lernende abrufen (mit Authentifizierung)
+// Lernende abrufen (mit Authentifizierung)
 getLernende: async (req, res) => {
     try {
         const berufsbildnerId = req.user.id; // Authentifizierter Berufsbildner
@@ -276,27 +266,26 @@ getLernende: async (req, res) => {
     }
 },
 
+// Lernenden aktualisieren (Edit)
+updateLernender: async (req, res) => {
+    try {
+        const { lernenderId } = req.params;
+        const { benutzername, name, vorname, beruf, berufsschule } = req.body;
 
-    // Lernenden aktualisieren (Edit)
-    updateLernender: async (req, res) => {
-        try {
-            const { lernenderId } = req.params;
-            const { benutzername, name, vorname, beruf, berufsschule } = req.body;
+        const sql = `
+            UPDATE lernender 
+            SET benutzername = ?, name = ?, vorname = ?, beruf = ?, berufsschule = ?
+            WHERE id = ?
+        `;
+        const values = [benutzername, name, vorname, beruf, berufsschule, lernenderId];
+        await pool.query(sql, values);
 
-            const sql = `
-                UPDATE lernender 
-                SET benutzername = ?, name = ?, vorname = ?, beruf = ?, berufsschule = ?
-                WHERE id = ?
-            `;
-            const values = [benutzername, name, vorname, beruf, berufsschule, lernenderId];
-            await pool.query(sql, values);
-
-            res.status(200).json({ message: "Lernender erfolgreich aktualisiert." });
-        } catch (error) {
-            console.error("Fehler beim Aktualisieren des Lernenden:", error);
-            res.status(500).json({ error: "Fehler beim Aktualisieren des Lernenden." });
-        }
-    },
+        res.status(200).json({ message: "Lernender erfolgreich aktualisiert." });
+    } catch (error) {
+        console.error("Fehler beim Aktualisieren des Lernenden:", error);
+        res.status(500).json({ error: "Fehler beim Aktualisieren des Lernenden." });
+    }
+},
 
 // Lehrbetrieb und Berufsbildner können Fächer hinzufügen
 addFach: async (req, res) => {
@@ -321,7 +310,6 @@ addFach: async (req, res) => {
         res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
     }
 },
-
 
 // Lernender mit ID abrufen
 getLernenderById: async (req, res) => {
@@ -374,19 +362,44 @@ getLernendeMitFaecherUndNoten: async (req, res) => {
             };
         }));
 
-        res.json({ data: lernendeMitFaecherUndNoten });
+        res.status(200).json({ data: lernendeMitFaecherUndNoten });
     } catch (error) {
         console.error("Fehler beim Abrufen der Lernenden mit Fächern und Noten:", error);
         res.status(500).json({ error: "Fehler beim Abrufen der Lernenden mit Fächern und Noten." });
     }
 },
- // Noten für ein Fach abrufen
- getNotenFuerFach: async (req, res) => {
-    try {
-        const { fachId } = req.params; // Fach-ID aus den URL-Parametern
 
-        // Abrufen aller Noten für das angegebene Fach
-        const [noten] = await pool.query("SELECT * FROM note WHERE fach_id = ?", [fachId]);
+// Noten für einen bestimmten Lernenden und ein Fach hinzufügen
+addNote: async (req, res) => {
+    try {
+        const { lernenderId, fachId, note } = req.body;
+
+        // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
+        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
+            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Noten hinzufügen.' });
+        }
+
+        const sql = `
+            INSERT INTO note (lernender_id, fach_id, note)
+            VALUES (?, ?, ?)
+        `;
+        const values = [lernenderId, fachId, note];
+        await pool.query(sql, values);
+
+        res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
+    } catch (error) {
+        console.error("Fehler beim Hinzufügen der Note:", error);
+        res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+    }
+},
+
+// Noten für einen Lernenden und Fach abrufen
+getNotenByLernenderAndFach: async (req, res) => {
+    try {
+        const { lernenderId, fachId } = req.params;
+
+        // Noten für den Lernenden und das Fach abrufen
+        const [noten] = await pool.query("SELECT * FROM note WHERE lernender_id = ? AND fach_id = ?", [lernenderId, fachId]);
 
         if (noten.length === 0) {
             return res.status(404).json({ message: "Keine Noten gefunden." });
@@ -399,117 +412,74 @@ getLernendeMitFaecherUndNoten: async (req, res) => {
     }
 },
 
-
-addNote: async (req, res) => {
+// Noten für alle Lernenden abrufen
+getAlleNoten: async (req, res) => {
     try {
-        const { titel, note } = req.body;
-        const fachId = req.params.fachId;
-        const lernenderId = req.user.id;
+        // Alle Noten abrufen
+        const [noten] = await pool.query("SELECT * FROM note");
 
-        if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
-            return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
+        if (noten.length === 0) {
+            return res.status(404).json({ message: "Keine Noten gefunden." });
         }
 
-        const sql = `
-            INSERT INTO note (fach_id, titel, note, lernender_id)
-            VALUES (?, ?, ?, ?)
-        `;
-        const values = [fachId, titel, note, lernenderId];
-        await pool.query(sql, values);
-
-        res.status(201).json({ message: "Note erfolgreich hinzugefügt." });
+        res.status(200).json({ data: noten });
     } catch (error) {
-        console.error("Fehler beim Hinzufügen der Note:", error); // Ausgabe des Fehlerdetails
-        res.status(500).json({ error: "Fehler beim Hinzufügen der Note." });
+        console.error("Fehler beim Abrufen aller Noten:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen aller Noten." });
     }
 },
 
+// Fach aktualisieren
+updateFach: async (req, res) => {
+    try {
+        const { fachId } = req.params;
+        const { fachname } = req.body;
 
+        const sql = `
+            UPDATE fach 
+            SET fachname = ?
+            WHERE id = ?
+        `;
+        const values = [fachname, fachId];
+        await pool.query(sql, values);
 
-
-    // Fach aktualisieren
-    updateFach: async (req, res) => {
-        try {
-            const { fachId } = req.params;
-            const { fachname } = req.body;
-
-            const sql = `
-                UPDATE fach 
-                SET fachname = ?
-                WHERE id = ?
-            `;
-            const values = [fachname, fachId];
-            await pool.query(sql, values);
-
-            res.status(200).json({ message: "Fach erfolgreich aktualisiert." });
-        } catch (error) {
-            console.error("Fehler beim Aktualisieren des Fachs:", error);
-            res.status(500).json({ error: "Fehler beim Aktualisieren des Fachs." });
-        }
-    },
-
-    editNote: async (req, res) => {
-        try {
-            const { noteId } = req.params; // Note-ID aus den URL-Parametern
-            const { titel, note } = req.body; // Titel und Note aus dem Request-Body
-            const lernenderId = req.user.id; // Lernender-ID aus dem Token des angemeldeten Benutzers
-    
-            // Überprüfen, ob der Benutzer die erforderlichen Berechtigungen hat
-            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
-                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten bearbeiten.' });
-            }
-    
-            // SQL-Abfrage zum Aktualisieren der Note
-            const sql = `
-                UPDATE note 
-                SET titel = ?, note = ? 
-                WHERE id = ? AND lernender_id = ? AND fach_id = ?
-            `;
-            const values = [titel, note, noteId, lernenderId, req.params.fachId]; // Werte für die Abfrage
-    
-            // Führe die Aktualisierung durch
-            const [result] = await pool.query(sql, values);
-    
-            // Überprüfe, ob eine Note aktualisiert wurde
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: "Note nicht gefunden oder keine Berechtigung zur Bearbeitung." });
-            }
-    
-            // Erfolgsantwort senden
-            res.status(200).json({ message: "Note erfolgreich aktualisiert." });
-        } catch (error) {
-            console.error("Fehler beim Bearbeiten der Note:", error); // Ausgabe des Fehlerdetails
-            res.status(500).json({ error: "Fehler beim Bearbeiten der Note." });
-        }
-    },
-    
-
-    deleteNote: async (req, res) => {
-        try {
-            const { noteId } = req.params; // Noten-ID aus den URL-Parametern
-    
-            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
-                return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Noten hinzufügen.' });
-            }
-            
-            console.log(`Lösche Note mit ID: ${noteId}`); // Logging für Debugging
-    
-            const sql = 'DELETE FROM note WHERE id = ?';
-            const values = [noteId];
-            const result = await pool.query(sql, values);
-            
-            console.log('Lösch-Resultat:', result); // Logging für Debugging
-    
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ message: 'Note nicht gefunden.' });
-            }
-    
-            res.status(200).json({ message: 'Note erfolgreich gelöscht.' });
-        } catch (error) {
-            console.error('Fehler beim Löschen der Note:', error);
-            res.status(500).json({ error: 'Fehler beim Löschen der Note.' });
-        }
+        res.status(200).json({ message: "Fach erfolgreich aktualisiert." });
+    } catch (error) {
+        console.error("Fehler beim Aktualisieren des Fachs:", error);
+        res.status(500).json({ error: "Fehler beim Aktualisieren des Fachs." });
     }
+},
+
+// Fach löschen
+deleteFach: async (req, res) => {
+    try {
+        const { fachId } = req.params;
+
+        const sql = "DELETE FROM fach WHERE id = ?";
+        await pool.query(sql, [fachId]);
+
+        res.status(200).json({ message: "Fach erfolgreich gelöscht." });
+    } catch (error) {
+        console.error("Fehler beim Löschen des Fachs:", error);
+        res.status(500).json({ error: "Fehler beim Löschen des Fachs." });
+    }
+},
+
+// Noten löschen
+deleteNote: async (req, res) => {
+    try {
+        const { noteId } = req.params;
+
+        const sql = "DELETE FROM note WHERE id = ?";
+        await pool.query(sql, [noteId]);
+
+        res.status(200).json({ message: "Note erfolgreich gelöscht." });
+    } catch (error) {
+        console.error("Fehler beim Löschen der Note:", error);
+        res.status(500).json({ error: "Fehler beim Löschen der Note." });
+    }
+}
+
     
     
 
