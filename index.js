@@ -21,6 +21,8 @@ const loginRouter = require('./routes/login.router');
 const markRouter = require('./routes/mark.router');
 const registerRouter = require('./routes/register.router');
 const teacherRouter = require('./routes/teacher.router');
+const notesRouter = require('./routes/notes.router');
+
 
 // Routen verwenden
 app.use('/api/exam', examRouter);
@@ -32,6 +34,7 @@ app.use('/api/login', loginRouter);          // Vergessen eingefügt
 app.use('/api/mark', markRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/teacher', teacherRouter);
+app.use('/api/notes', notesRouter);
 
 // Fehlerbehandlung
 app.use((err, req, res, next) => {
