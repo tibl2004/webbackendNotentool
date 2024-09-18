@@ -6,7 +6,7 @@ const fachController = require('../controller/fach.controller');
 router.use(fachController.authenticateToken);
 
 // Route: Fächer eines bestimmten Lernenden abrufen
-router.get('/lernender/:lernenderId/faecher', fachController.getFaecher);
+router.get('/', fachController.getFaecher);
 
 // Route: Neues Fach hinzufügen (nur für Lehrbetrieb oder Berufsbildner)
 router.post('/', fachController.addFach);
