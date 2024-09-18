@@ -23,7 +23,7 @@ const fachController = {
 
     getFaecher: async (req, res) => {
         try {
-            const { lernenderId } = req.params; // Lernender-ID aus URL-Parametern
+            const lernenderId = req.user.id; // Lernenden-ID aus dem Token
 
             // Abrufen der Fächer für den angegebenen Lernenden
             const [faecher] = await pool.query("SELECT id, fachname FROM fach WHERE lernender_id = ?", [lernenderId]);
@@ -35,6 +35,7 @@ const fachController = {
             res.status(500).json({ error: "Fehler beim Abrufen der Fächer für den Lernenden." });
         }
     },
+
 
     // Lehrbetrieb und Berufsbildner können Fächer hinzufügen
     addFach: async (req, res) => {
