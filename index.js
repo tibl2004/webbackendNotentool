@@ -6,20 +6,31 @@ dotenv.config();
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // Routen importieren
-const educationRouter = require('./routes/education.router');
-const homeworkRouter = require('./routes/homework.router');
 const examRouter = require('./routes/exam.router');
+const fachRouter = require('./routes/fach.router');
+const homeworkRouter = require('./routes/homework.router');
+const lehrbetriebRouter = require('./routes/lehrbetrieb.router');
+const lernenderRouter = require('./routes/lernender.router');
+const loginRouter = require('./routes/login.router');
+const markRouter = require('./routes/mark.router');
+const registerRouter = require('./routes/register.router');
 const teacherRouter = require('./routes/teacher.router');
 
-// Routen zuweisen
-app.use('/api/education', educationRouter);
-app.use('/api/homework', homeworkRouter);
+// Routen verwenden
 app.use('/api/exam', examRouter);
+app.use('/api/fach', fachRouter);
+app.use('/api/homework', homeworkRouter);
+app.use('/api/lehrbetriebe', lehrbetriebRouter);
+app.use('/api/lernender', lernenderRouter);  // Vergessen eingefügt
+app.use('/api/login', loginRouter);          // Vergessen eingefügt
+app.use('/api/mark', markRouter);
+app.use('/api/register', registerRouter);
 app.use('/api/teacher', teacherRouter);
 
 // Fehlerbehandlung
