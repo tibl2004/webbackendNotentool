@@ -23,14 +23,13 @@ const registerRouter = require('./routes/register.router');
 const teacherRouter = require('./routes/teacher.router');
 const notesRouter = require('./routes/notes.router');
 
-
 // Routen verwenden
 app.use('/api/exam', examRouter);
 app.use('/api/fach', fachRouter);
 app.use('/api/homework', homeworkRouter);
 app.use('/api/lehrbetriebe', lehrbetriebRouter);
-app.use('/api/lernender', lernenderRouter);  // Vergessen eingefügt
-app.use('/api/login', loginRouter);          // Vergessen eingefügt
+app.use('/api/lernender', lernenderRouter);
+app.use('/api/login', loginRouter);
 app.use('/api/mark', markRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/teacher', teacherRouter);
@@ -39,7 +38,11 @@ app.use('/api/notes', notesRouter);
 // Fehlerbehandlung
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).send('Etwas ist schiefgelaufen!');
+    if (err.status === 503) {
+        res.status(503).send('Dienst momentan nicht verfügbar.');
+    } else {
+        res.status(500).send('Etwas ist schiefgelaufen!');
+    }
 });
 
 // Server starten
