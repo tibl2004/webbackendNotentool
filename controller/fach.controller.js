@@ -60,7 +60,7 @@ const fachController = {
             console.error("Fehler beim Hinzufügen des Fachs:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
         }
-    }
+    },
     
 
 
