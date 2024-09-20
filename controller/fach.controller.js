@@ -37,17 +37,16 @@ const fachController = {
     },
 
 
-     // Lehrbetrieb und Berufsbildner können Fächer hinzufügen
-     addFach: async (req, res) => {
+    addFach: async (req, res) => {
         try {
             const { fachname } = req.body; // Fachname aus dem Request-Body
             const lernenderId = req.user.id; // Lernenden-ID aus dem JWT-Token
-
+    
             // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
             if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
                 return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Fächer hinzufügen.' });
             }
-
+    
             // SQL-Query zum Hinzufügen des Fachs
             const sql = `
                 INSERT INTO fach (lernender_id, fachname)
@@ -55,13 +54,14 @@ const fachController = {
             `;
             const values = [lernenderId, fachname];
             await pool.query(sql, values);
-
+    
             res.status(201).json({ message: "Fach erfolgreich hinzugefügt." });
         } catch (error) {
             console.error("Fehler beim Hinzufügen des Fachs:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
         }
-    },
+    }
+    
 
 
     // Fach aktualisieren
