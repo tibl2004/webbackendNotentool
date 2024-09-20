@@ -37,16 +37,18 @@ const fachController = {
     },
 
 
-    // Lehrbetrieb und Berufsbildner können Fächer hinzufügen
-    addFach: async (req, res) => {
+     // Lehrbetrieb und Berufsbildner können Fächer hinzufügen
+     addFach: async (req, res) => {
         try {
-            const { lernenderId, fachname } = req.body; // Lernender ID und Fachname aus dem Request-Body
+            const { fachname } = req.body; // Fachname aus dem Request-Body
+            const lernenderId = req.user.id; // Lernenden-ID aus dem JWT-Token
 
             // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
             if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
                 return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Fächer hinzufügen.' });
             }
 
+            // SQL-Query zum Hinzufügen des Fachs
             const sql = `
                 INSERT INTO fach (lernender_id, fachname)
                 VALUES (?, ?)
@@ -60,6 +62,7 @@ const fachController = {
             res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
         }
     },
+
 
     // Fach aktualisieren
     updateFach: async (req, res) => {
