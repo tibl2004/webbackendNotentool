@@ -1,4 +1,3 @@
-const express = require('express');
 const jwt = require('jsonwebtoken');
 const pool = require('../database/index'); // Pool zur Datenbankverbindung
 
@@ -28,8 +27,8 @@ const berufsbildnerController = {
         next();
     },
 
-     // Noten eines bestimmten Lernenden für ein spezifisches Fach abrufen
-     getMarksForLernenderAndFach: async (req, res) => {
+    // Noten eines bestimmten Lernenden für ein spezifisches Fach abrufen
+    getMarksForLernenderAndFach: async (req, res) => {
         try {
             const { lernenderId, fachId } = req.params; // Lernender-ID und Fach-ID aus den URL-Parametern
 
