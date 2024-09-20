@@ -43,7 +43,7 @@ const fachController = {
             const lernenderId = req.user.id; // Lernenden-ID aus dem JWT-Token
     
             // Überprüfen, ob der Benutzer ein Lehrbetrieb oder Berufsbildner ist
-            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner') {
+            if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner'  && req.user.userType !== 'berufsbildner') {
                 return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb oder Berufsbildner können Fächer hinzufügen.' });
             }
     
