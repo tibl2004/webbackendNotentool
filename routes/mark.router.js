@@ -1,14 +1,21 @@
 const express = require('express');
-const router = express.Router();
-const markController = require('../controller/mark.controller');
+const markController = require('../controller/mark.controller'); // Pfad zum Mark-Controller
 
-// Middleware zur Authentifizierung
+const router = express.Router();
+
+// Authentifizierungsmiddleware für alle Routen
 router.use(markController.authenticateToken);
 
-// Routen
-router.get('/fach/:fachId/marks', markController.getMarks); // Noten für ein bestimmtes Fach abrufen
-router.post('/fach/:fachId/marks', markController.addMark); // Note zu einem Fach hinzufügen
-router.put('/fach/:fachId/marks/:noteId', markController.editMark); // Eine Note bearbeiten
-router.delete('/fach/:fachId/marks/:noteId', markController.deleteMark); // Eine Note löschen
+// Route zum Abrufen der Noten für ein Fach
+router.get('/:fachId', markController.getMarks);
+
+// Route zum Hinzufügen einer Note
+router.post('/:fachId', markController.addMark);
+
+// Route zum Bearbeiten einer Note
+router.put('/:fachId/:noteId', markController.editMark);
+
+// Route zum Löschen einer Note
+router.delete('/:fachId/:noteId', markController.deleteMark);
 
 module.exports = router;

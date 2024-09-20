@@ -6,7 +6,7 @@ const fachController = {
     // Authentifizierungsmiddleware
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; 
+        const token = authHeader && authHeader.split(' ')[1];
 
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
 
@@ -15,54 +15,44 @@ const fachController = {
                 console.error('Token Überprüfung fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user; 
+            req.user = user;
             next();
         });
     },
 
-
+    // Fächer mit Notendurchschnitt abrufen
     getFaecher: async (req, res) => {
         try {
-            const lernenderId = req.user.id; // Lernenden-ID aus dem Token
+            const lernenderId = req.user.id;
 
-            // Abrufen der Fächer für den angegebenen Lernenden
-            const [faecher] = await pool.query("SELECT id, fachname FROM fach WHERE lernender_id = ?", [lernenderId]);
+            const [faecher] = await pool.query("SELECT id, fachname, notendurchschnitt FROM fach WHERE lernender_id = ?", [lernenderId]);
 
-            // Rückgabe der Fächer
             res.json({ data: faecher });
         } catch (error) {
-            console.error("Fehler beim Abrufen der Fächer für den Lernenden:", error);
-            res.status(500).json({ error: "Fehler beim Abrufen der Fächer für den Lernenden." });
+            console.error("Fehler beim Abrufen der Fächer:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
         }
     },
 
-
+    // Fach hinzufügen
     addFach: async (req, res) => {
         try {
-            const { fachname } = req.body; // Fachname aus dem Request-Body
-            const lernenderId = req.user.id; // Lernenden-ID aus dem JWT-Token
-    
-            // Überprüfen, ob der Benutzer ein Lehrbetrieb, Berufsbildner oder Lernender ist
+            const { fachname } = req.body;
+            const lernenderId = req.user.id;
+
             if (req.user.userType !== 'lehrbetrieb' && req.user.userType !== 'berufsbildner' && req.user.userType !== 'lernender') {
                 return res.status(403).json({ error: 'Zugriff verweigert: Nur Lehrbetrieb, Berufsbildner oder Lernender können Fächer hinzufügen.' });
             }
-    
-            // SQL-Query zum Hinzufügen des Fachs
-            const sql = `
-                INSERT INTO fach (lernender_id, fachname)
-                VALUES (?, ?)
-            `;
-            const values = [lernenderId, fachname];
-            await pool.query(sql, values);
-    
+
+            const sql = "INSERT INTO fach (lernender_id, fachname) VALUES (?, ?)";
+            await pool.query(sql, [lernenderId, fachname]);
+
             res.status(201).json({ message: "Fach erfolgreich hinzugefügt." });
         } catch (error) {
             console.error("Fehler beim Hinzufügen des Fachs:", error);
             res.status(500).json({ error: "Fehler beim Hinzufügen des Fachs." });
         }
     },
-    
-
 
     // Fach aktualisieren
     updateFach: async (req, res) => {
@@ -70,13 +60,8 @@ const fachController = {
             const { fachId } = req.params;
             const { fachname } = req.body;
 
-            const sql = `
-                UPDATE fach 
-                SET fachname = ?
-                WHERE id = ?
-            `;
-            const values = [fachname, fachId];
-            await pool.query(sql, values);
+            const sql = "UPDATE fach SET fachname = ? WHERE id = ?";
+            await pool.query(sql, [fachname, fachId]);
 
             res.status(200).json({ message: "Fach erfolgreich aktualisiert." });
         } catch (error) {
@@ -90,12 +75,8 @@ const fachController = {
         try {
             const { fachId } = req.params;
 
-            const sql = `
-                DELETE FROM fach 
-                WHERE id = ?
-            `;
-            const values = [fachId];
-            await pool.query(sql, values);
+            const sql = "DELETE FROM fach WHERE id = ?";
+            await pool.query(sql, [fachId]);
 
             res.status(200).json({ message: "Fach erfolgreich gelöscht." });
         } catch (error) {
