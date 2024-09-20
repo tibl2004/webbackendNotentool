@@ -6,8 +6,8 @@ const berufsbildnerController = require('../controller/berufsbildner.controller'
 router.use(berufsbildnerController.authenticateToken);
 router.use(berufsbildnerController.checkIfBerufsbildner);
 
-// Route: Noten eines bestimmten Lernenden abrufen
-router.get('/lernender/:lernenderId/marks', berufsbildnerController.getMarksForLernender);
+// Beispielroute zum Abrufen der Noten eines Lernenden für ein spezifisches Fach
+router.get('/berufsbildner/lernende/:lernenderId/fach/:fachId/marks', authenticateToken, checkIfBerufsbildner, getMarksForLernenderAndFach);
 
 // Route: Fächer eines bestimmten Lernenden abrufen
 router.get('/lernender/:lernenderId/faecher', berufsbildnerController.getFaecherForLernender);

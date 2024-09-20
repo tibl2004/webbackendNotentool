@@ -28,24 +28,26 @@ const berufsbildnerController = {
         next();
     },
 
-    // Noten eines bestimmten Lernenden abrufen
-    getMarksForLernender: async (req, res) => {
+     // Noten eines bestimmten Lernenden für ein spezifisches Fach abrufen
+     getMarksForLernenderAndFach: async (req, res) => {
         try {
-            const { lernenderId } = req.params; // Lernender-ID aus den URL-Parametern
+            const { lernenderId, fachId } = req.params; // Lernender-ID und Fach-ID aus den URL-Parametern
 
-            // Abrufen der Noten für den angegebenen Lernenden
+            // Abrufen der Noten für den angegebenen Lernenden und das angegebene Fach
             const [noten] = await pool.query(
-                "SELECT n.titel, n.note, f.fachname FROM note n JOIN fach f ON n.fach_id = f.id WHERE n.lernender_id = ?", 
-                [lernenderId]
+                `SELECT n.titel, n.note 
+                 FROM note n 
+                 WHERE n.lernender_id = ? AND n.fach_id = ?`, 
+                [lernenderId, fachId]
             );
 
             if (noten.length === 0) {
-                return res.status(404).json({ message: "Keine Noten für diesen Lernenden gefunden." });
+                return res.status(404).json({ message: "Keine Noten für dieses Fach bei diesem Lernenden gefunden." });
             }
 
             res.status(200).json({ data: noten });
         } catch (error) {
-            console.error("Fehler beim Abrufen der Noten für den Lernenden:", error);
+            console.error("Fehler beim Abrufen der Noten:", error);
             res.status(500).json({ error: "Fehler beim Abrufen der Noten." });
         }
     },
