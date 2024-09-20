@@ -11,5 +11,7 @@ router.get('/lernende/:lernenderId/fach/:fachId/marks', berufsbildnerController.
 
 // Route zum Abrufen der Fächer eines bestimmten Lernenden
 router.get('/lernende/:lernenderId/faecher', berufsbildnerController.getFaecherForLernender);
+router.get('/lernende', berufsbildnerController.getLernende);  // Lernenden abrufen
+
 
 module.exports = router;

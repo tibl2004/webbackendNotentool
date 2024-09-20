@@ -5,7 +5,7 @@ const berufsbildnerController = {
     // Authentifizierungsmiddleware
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; 
+        const token = authHeader && authHeader.split(' ')[1];
 
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
 
@@ -14,7 +14,7 @@ const berufsbildnerController = {
                 console.error('Token Überprüfung fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user; 
+            req.user = user;
             next();
         });
     },
@@ -36,7 +36,7 @@ const berufsbildnerController = {
             const [noten] = await pool.query(
                 `SELECT n.titel, n.note 
                  FROM note n 
-                 WHERE n.lernender_id = ? AND n.fach_id = ?`, 
+                 WHERE n.lernender_id = ? AND n.fach_id = ?`,
                 [lernenderId, fachId]
             );
 
@@ -58,7 +58,7 @@ const berufsbildnerController = {
 
             // Abrufen der Fächer für den angegebenen Lernenden
             const [faecher] = await pool.query(
-                "SELECT id, fachname FROM fach WHERE lernender_id = ?", 
+                "SELECT id, fachname FROM fach WHERE lernender_id = ?",
                 [lernenderId]
             );
 
@@ -71,7 +71,30 @@ const berufsbildnerController = {
             console.error("Fehler beim Abrufen der Fächer für den Lernenden:", error);
             res.status(500).json({ error: "Fehler beim Abrufen der Fächer." });
         }
-    }
+    },
+
+    // Lernende abrufen (nur die, die dem eingelogten Berufsbildner zugeordnet sind)
+    getLernende: async (req, res) => {
+        try {
+            const berufsbildnerId = req.user.id; // Authentifizierter Berufsbildner (aus dem Token)
+
+            // Abrufen aller Lernenden, die dem Berufsbildner mit der gleichen berufsbildner_id zugeordnet sind
+            const [lernende] = await pool.query(
+                "SELECT * FROM lernender WHERE berufsbildner_id = ?",
+                [berufsbildnerId]
+            );
+
+            if (lernende.length === 0) {
+                return res.status(404).json({ message: "Keine Lernenden gefunden." });
+            }
+
+            res.status(200).json({ data: lernende });
+        } catch (error) {
+            console.error("Fehler beim Abrufen der Lernenden:", error);
+            res.status(500).json({ error: "Fehler beim Abrufen der Lernenden." });
+        }
+    },
+
 };
 
 module.exports = berufsbildnerController;
