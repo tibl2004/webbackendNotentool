@@ -20,25 +20,25 @@ const homeworkController = {
         });
     },
 
-    // Hausaufgabe erstellen (mit FachID)
     createHomework: async (req, res) => {
         try {
             const lernenderId = req.user.id; // Authentifizierter Lernender
-            const { titel, beschreibung, abgabedatum, fach_id } = req.body; // FachID wird vom Frontend übergeben
-
+            const { titel, beschreibung, abgabedatum, fach_id } = req.body;
+    
             const sql = `
                 INSERT INTO hausaufgabe (lernender_id, titel, beschreibung, abgabedatum, erledigt, fach_id)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
-            const values = [lernenderId, titel, beschreibung, abgabedatum, false, fach_id]; // FachID wird gespeichert
+            const values = [lernenderId, titel, beschreibung, abgabedatum, false, fach_id];
             await pool.query(sql, values);
-
+    
             res.status(201).json({ message: "Hausaufgabe erfolgreich erstellt." });
         } catch (error) {
             console.error("Fehler beim Erstellen der Hausaufgabe:", error);
             res.status(500).json({ error: "Fehler beim Erstellen der Hausaufgabe." });
         }
     },
+    
 
     // Alle Hausaufgaben für einen Lernenden abrufen
     getHomeworksByLernenderId: async (req, res) => {
