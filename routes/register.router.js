@@ -16,6 +16,6 @@ router.post('/berufsbildner', registerController.registerBerufsbildner);
 router.post('/lernender', registerController.authenticateToken, registerController.registerLernender);
 
 // Lizenz aktivieren (nur für Lehrbetriebe)
-router.post('/activate-license', registerController.authenticateToken, registerController.activateLicense);
+router.post('/activate-license', registerController.activateLicense);
 
 module.exports = router;
