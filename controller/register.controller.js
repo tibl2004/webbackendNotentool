@@ -115,10 +115,11 @@ const registerController = {
         const { licenseCode } = req.body;
     
         try {
-            // Suche nach dem Lehrbetrieb mit dem Lizenzcode
+            // Suche nach dem Lehrbetrieb mit dem angegebenen Lizenzcode
             const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE lizenz_code = ?", [licenseCode]);
     
-            if (lehrbetrieb.length === 0) {
+            // Überprüfe, ob der Lehrbetrieb mit dem Lizenzcode existiert
+            if (!lehrbetrieb || lehrbetrieb.length === 0) {
                 return res.status(404).json({ error: "Lehrbetrieb mit diesem Lizenzcode nicht gefunden." });
             }
     
@@ -136,6 +137,7 @@ const registerController = {
             res.status(500).json({ error: "Fehler bei der Lizenzaktivierung." });
         }
     },
+    
     
 
     
