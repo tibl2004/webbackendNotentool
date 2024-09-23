@@ -1,17 +1,21 @@
 const express = require('express');
+const registerController = require('../controller/register.controller'); // Ersetze dies mit dem tatsächlichen Pfad
+
 const router = express.Router();
-const registerController = require('../controller/register.controller');
 
 // Admin-Registrierung
 router.post('/admin', registerController.registerAdmin);
 
 // Lehrbetrieb-Registrierung
-router.post('/lehrbetrieb',  registerController.authenticateToken, registerController.registerLehrbetrieb);
+router.post('/lehrbetrieb', registerController.registerLehrbetrieb);
 
 // Berufsbildner-Registrierung
-router.post('/berufsbildner',  registerController.authenticateToken, registerController.registerBerufsbildner);
+router.post('/berufsbildner', registerController.registerBerufsbildner);
 
-// Lernende-Registrierung (nur für Lehrbetrieb)
+// Lernende registrieren (nur für Lehrbetriebe)
 router.post('/lernender', registerController.authenticateToken, registerController.registerLernender);
+
+// Lizenz aktivieren (nur für Lehrbetriebe)
+router.post('/activate-license', registerController.authenticateToken, registerController.activateLicense);
 
 module.exports = router;
