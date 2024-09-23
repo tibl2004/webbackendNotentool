@@ -52,12 +52,12 @@ const registerController = {
             }
 
             const hashedPassword = await bcrypt.hash(passwort, 10);
-            const licenseCode = generateLicenseCode(); // Lizenzcode generieren
+            const licenseCode = generateLicenseCode();
             const sql = `
                 INSERT INTO lehrbetrieb (name, adresse, benutzername, passwort, lizenz_code, licenseActive)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
-            await pool.query(sql, [name, adresse, benutzername, hashedPassword, licenseCode, false]); // Lizenz ist initial deaktiviert
+            await pool.query(sql, [name, adresse, benutzername, hashedPassword, licenseCode, false]);
 
             res.status(201).json({ message: "Lehrbetrieb erfolgreich registriert.", licenseCode });
         } catch (error) {
@@ -115,20 +115,19 @@ const registerController = {
     // Lizenz aktivieren
     activateLicense: async (req, res) => {
         const { licenseCode } = req.body;
-        const userId = req.user.id; // ID des angemeldeten Benutzers
 
         try {
-            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE id = ?", [userId]);
+            // Suche nach dem Lehrbetrieb, der den Lizenzcode hat
+            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE lizenz_code = ?", [licenseCode]);
+            
             if (lehrbetrieb.length === 0) {
-                return res.status(404).json({ error: "Lehrbetrieb nicht gefunden." });
+                return res.status(404).json({ error: "Lehrbetrieb mit diesem Lizenzcode nicht gefunden." });
             }
 
-            if (lehrbetrieb[0].lizenz_code === licenseCode) {
-                await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [true, userId]);
-                return res.status(200).json({ message: "Lizenz erfolgreich aktiviert." });
-            } else {
-                return res.status(400).json({ error: "Ungültiger Lizenzcode." });
-            }
+            // Aktiviere die Lizenz für den gefundenen Lehrbetrieb
+            await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [true, lehrbetrieb[0].id]);
+            
+            res.status(200).json({ message: "Lizenz erfolgreich aktiviert." });
         } catch (error) {
             console.error("Fehler bei der Lizenzaktivierung:", error);
             res.status(500).json({ error: "Fehler bei der Lizenzaktivierung." });
