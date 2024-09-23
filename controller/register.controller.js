@@ -112,20 +112,19 @@ const registerController = {
         }
     },
 
-    // Lizenz aktivieren
     activateLicense: async (req, res) => {
         const { licenseCode } = req.body;
-
+    
         try {
-            // Suche nach dem Lehrbetrieb, der den Lizenzcode hat
+            // Suche nach dem Lehrbetrieb mit dem Lizenzcode
             const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE lizenz_code = ?", [licenseCode]);
             
             if (lehrbetrieb.length === 0) {
                 return res.status(404).json({ error: "Lehrbetrieb mit diesem Lizenzcode nicht gefunden." });
             }
-
+    
             // Aktiviere die Lizenz für den gefundenen Lehrbetrieb
-            await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [true, lehrbetrieb[0].id]);
+            await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [1, lehrbetrieb[0].id]); // licenseActive auf 1 setzen
             
             res.status(200).json({ message: "Lizenz erfolgreich aktiviert." });
         } catch (error) {
@@ -133,6 +132,7 @@ const registerController = {
             res.status(500).json({ error: "Fehler bei der Lizenzaktivierung." });
         }
     }
+    
 };
 
 // Hilfsfunktion zur Generierung eines Lizenzcodes
