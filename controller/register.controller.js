@@ -113,31 +113,30 @@ const registerController = {
     },
     activateLicense: async (req, res) => {
         const { licenseCode } = req.body;
-
+    
         try {
-            // Suche nach dem Lehrbetrieb, der den Lizenzcode hat
+            // Suche nach dem Lehrbetrieb mit dem Lizenzcode
             const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE lizenz_code = ?", [licenseCode]);
-
+    
             if (lehrbetrieb.length === 0) {
                 return res.status(404).json({ error: "Lehrbetrieb mit diesem Lizenzcode nicht gefunden." });
             }
-
-            // Aktiviere die Lizenz für den gefundenen Lehrbetrieb
-            const lehrbetriebId = lehrbetrieb[0].id;
-
+    
             // Überprüfen, ob die Lizenz bereits aktiv ist
             if (lehrbetrieb[0].licenseActive) {
                 return res.status(400).json({ error: "Die Lizenz ist bereits aktiviert." });
             }
-
-            await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [true, lehrbetriebId]);
-
+    
+            // Aktiviere die Lizenz für den gefundenen Lehrbetrieb
+            await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [true, lehrbetrieb[0].id]);
+    
             res.status(200).json({ message: "Lizenz erfolgreich aktiviert." });
         } catch (error) {
             console.error("Fehler bei der Lizenzaktivierung:", error);
             res.status(500).json({ error: "Fehler bei der Lizenzaktivierung." });
         }
     },
+    
 
     
 };
