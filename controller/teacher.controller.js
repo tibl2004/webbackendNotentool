@@ -20,26 +20,25 @@ const teacherController = {
         });
     },
 
-    // Lehrer erstellen (mit LernenderID)
-    createTeacher: async (req, res) => {
-        try {
-            const lernenderId = req.user.id; // Authentifizierter Lernender
-            const { imglink, vorname, name, email } = req.body;
+   // Lehrer erstellen (mit LernenderID)
+createTeacher: async (req, res) => {
+    try {
+        const lernenderId = req.user.id; // Authentifizierter Lernender
+        const { imglink, vorname, name, email } = req.body;
 
-            const sql = `
-                INSERT INTO lehrer (lernender_id, img_link, vorname, name, email)
-                VALUES (?, ?, ?, ?, ?)
-            `;
-            const values = [lernenderId, imglink, vorname, name, email];
-            await pool.query(sql, values);
+        const sql = `
+            INSERT INTO lehrer (lernender_id, img_link, vorname, name, email)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        const values = [lernenderId, imglink || null, vorname, name, email]; // Setze imglink auf null, wenn nicht vorhanden
+        await pool.query(sql, values);
 
-            res.status(201).json({ message: "Lehrer erfolgreich erstellt." });
-        } catch (error) {
-            console.error("Fehler beim Erstellen des Lehrers:", error);
-            res.status(500).json({ error: "Fehler beim Erstellen des Lehrers." });
-        }
-    },
-
+        res.status(201).json({ message: "Lehrer erfolgreich erstellt." });
+    } catch (error) {
+        console.error("Fehler beim Erstellen des Lehrers:", error);
+        res.status(500).json({ error: "Fehler beim Erstellen des Lehrers." });
+    }
+},
     // Alle Lehrer für einen Lernenden abrufen
     getTeachersByLernenderId: async (req, res) => {
         try {

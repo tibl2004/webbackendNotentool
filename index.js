@@ -22,6 +22,7 @@ const markRouter = require('./routes/mark.router');
 const registerRouter = require('./routes/register.router');
 const teacherRouter = require('./routes/teacher.router');
 const notesRouter = require('./routes/notes.router');
+const berufeRouter = require('./routes/berufe.router');
 const berufsbildnerRouter = require('./routes/berufsbildner.router');
 
 // Routen verwenden
@@ -35,6 +36,7 @@ app.use('/api/mark', markRouter);
 app.use('/api/register', registerRouter);
 app.use('/api/teacher', teacherRouter);
 app.use('/api/notes', notesRouter);
+app.use('/api/berufe', berufeRouter);
 app.use('/api/berufsbildner', berufsbildnerRouter);
 
 // Fehlerbehandlung
