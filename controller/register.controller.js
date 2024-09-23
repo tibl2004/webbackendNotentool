@@ -123,7 +123,6 @@ const registerController = {
                 return res.status(404).json({ error: "Lehrbetrieb nicht gefunden." });
             }
 
-            // Überprüfen, ob der Lizenzcode gültig ist (hier eine einfache Logik, du kannst sie anpassen)
             if (lehrbetrieb[0].lizenz_code === licenseCode) {
                 await pool.query("UPDATE lehrbetrieb SET licenseActive = ? WHERE id = ?", [true, userId]);
                 return res.status(200).json({ message: "Lizenz erfolgreich aktiviert." });
@@ -137,9 +136,17 @@ const registerController = {
     }
 };
 
-// Hilfsfunktion zur Generierung eines Lizenzcodes (ein Beispiel)
+// Hilfsfunktion zur Generierung eines Lizenzcodes
 function generateLicenseCode() {
-    return Math.random().toString(36).substring(2, 10); // Generiere einen einfachen Lizenzcode
+    const generateSegment = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let segment = '';
+        for (let i = 0; i < 4; i++) {
+            segment += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return segment;
+    };
+    return `${generateSegment()}-${generateSegment()}-${generateSegment()}-${generateSegment()}-${generateSegment()}-${generateSegment()}`;
 }
 
 module.exports = registerController;
