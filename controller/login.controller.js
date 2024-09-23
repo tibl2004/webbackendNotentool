@@ -7,79 +7,75 @@ const loginController = {
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token
-    
+
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
-    
+
         jwt.verify(token, 'secretKey', (err, user) => {
             if (err) {
                 console.error('Token Überprüfung Fehlgeschlagen:', err);
                 return res.status(403).json({ error: 'Ungültiger Token.' });
             }
-            req.user = user; // Die Benutzerinformationen aus dem Token zur Verfügung stellen
+            req.user = user; // Benutzerinformationen aus dem Token zur Verfügung stellen
             next();
         });
     },
-    
-    
 
-    
+    // Login für Admin, Berufsbildner, Lernende und Lehrbetrieb
+    login: async (req, res) => {
+        try {
+            const { benutzername, passwort } = req.body;
 
-   // Login für Admin, Berufsbildner, Lernende und Lehrbetrieb
-   login: async (req, res) => {
-    try {
-        const { benutzername, passwort } = req.body;
+            // Versuche, den Benutzer in allen Tabellen zu finden
+            const [admin] = await pool.query("SELECT * FROM admin WHERE benutzername = ?", [benutzername]);
+            const [berufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
+            const [lernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
+            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
 
-        // Versuche, den Benutzer in allen Tabellen zu finden
-        const [admin] = await pool.query("SELECT * FROM admin WHERE benutzername = ?", [benutzername]);
-        const [berufsbildner] = await pool.query("SELECT * FROM berufsbildner WHERE benutzername = ?", [benutzername]);
-        const [lernender] = await pool.query("SELECT * FROM lernender WHERE benutzername = ?", [benutzername]);
-        const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE benutzername = ?", [benutzername]);
+            let user = null;
+            let userType = null;
 
-        let user = null;
-        let userType = null;
+            if (admin.length > 0) {
+                user = admin[0];
+                userType = 'admin';
+            } else if (berufsbildner.length > 0) {
+                user = berufsbildner[0];
+                userType = 'berufsbildner';
+            } else if (lernender.length > 0) {
+                user = lernender[0];
+                userType = 'lernender';
+            } else if (lehrbetrieb.length > 0) {
+                user = lehrbetrieb[0];
+                userType = 'lehrbetrieb';
+            } else {
+                return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
+            }
 
-        if (admin.length > 0) {
-            user = admin[0];
-            userType = 'admin';
-        } else if (berufsbildner.length > 0) {
-            user = berufsbildner[0];
-            userType = 'berufsbildner';
-        } else if (lernender.length > 0) {
-            user = lernender[0];
-            userType = 'lernender';
-        } else if (lehrbetrieb.length > 0) {
-            user = lehrbetrieb[0];
-            userType = 'lehrbetrieb';
-        } else {
-            return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
+            // Überprüfe das Passwort
+            const validPassword = await bcrypt.compare(passwort, user.passwort);
+            if (!validPassword) {
+                return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
+            }
+
+            // Überprüfe, ob die Lizenz aktiv ist
+            if (userType === 'lehrbetrieb' && !user.licenseActive) {
+                return res.status(403).json({ error: "Lizenz nicht aktiviert. Bitte aktivieren Sie Ihre Lizenz." });
+            }
+
+            // Erstelle das Token-Payload
+            const tokenPayload = {
+                id: user.id,
+                benutzername: user.benutzername,
+                userType,
+                ...user // Alle anderen Benutzerinformationen hinzufügen
+            };
+
+            const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '24h' });
+            res.json({ token, userType });
+        } catch (error) {
+            console.error("Fehler beim Login:", error);
+            res.status(500).json({ error: "Fehler beim Login." });
         }
-
-        // Überprüfe das Passwort
-        const validPassword = await bcrypt.compare(passwort, user.passwort);
-        if (!validPassword) {
-            return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
-        }
-
-        // Erstelle das Token-Payload mit allen relevanten Informationen
-        const tokenPayload = {
-            id: user.id,
-            benutzername: user.benutzername,
-            userType,
-            ...user // Alle anderen Benutzerinformationen hinzufügen
-        };
-
-        const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '24h' });
-        res.json({ token, userType });
-    } catch (error) {
-        console.error("Fehler beim Login:", error);
-        res.status(500).json({ error: "Fehler beim Login." });
     }
-},
-
-   
-    
-    
-
 };
 
 module.exports = loginController;
