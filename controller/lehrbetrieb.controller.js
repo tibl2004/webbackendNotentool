@@ -7,9 +7,9 @@ const lehrbetriebController = {
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token
-    
+
         if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
-    
+
         jwt.verify(token, 'secretKey', (err, user) => {
             if (err) {
                 console.error('Token Überprüfung Fehlgeschlagen:', err);
@@ -20,14 +20,16 @@ const lehrbetriebController = {
         });
     },
 
+    // Lehrbetriebe dürfen nur von Admins gesehen werden
     getLehrbetriebe: async (req, res) => {
         try {
+            // Nur Admins dürfen Lehrbetriebe abrufen
             if (req.user.userType !== 'admin') {
-                return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe abrufen.' });
+                return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe sehen.' });
             }
 
             const [lehrbetriebe] = await pool.query("SELECT * FROM lehrbetrieb");
-            res.json({ data: lehrbetriebe });
+            return res.json({ data: lehrbetriebe });
         } catch (error) {
             console.error("Fehler beim Abrufen der Lehrbetriebe:", error);
             res.status(500).json({ error: "Fehler beim Abrufen der Lehrbetriebe." });
@@ -36,8 +38,9 @@ const lehrbetriebController = {
 
     updateLehrbetrieb: async (req, res) => {
         const { id } = req.params;
-        const { name, adresse, plz, ort } = req.body; // Beispiel-Felder für den Lehrbetrieb
+        const { name, adresse, plz, ort } = req.body;
         try {
+            // Nur Admins dürfen Lehrbetriebe aktualisieren
             if (req.user.userType !== 'admin') {
                 return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe aktualisieren.' });
             }
@@ -61,6 +64,7 @@ const lehrbetriebController = {
     deleteLehrbetrieb: async (req, res) => {
         const { id } = req.params;
         try {
+            // Nur Admins dürfen Lehrbetriebe löschen
             if (req.user.userType !== 'admin') {
                 return res.status(403).json({ error: 'Zugriff verweigert: Nur Admins können Lehrbetriebe löschen.' });
             }

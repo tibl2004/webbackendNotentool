@@ -56,9 +56,8 @@ const loginController = {
                 return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
             }
 
-            // Lizenzstatus überprüfen
-            const licenseActive = user.licenseActive; // Hier den Lizenzstatus abfragen
-            if (!licenseActive) {
+            // Lizenzstatus nur für Lehrbetrieb überprüfen
+            if (userType === 'lehrbetrieb' && !user.licenseActive) {
                 return res.status(403).json({ error: "Lizenz nicht aktiviert. Bitte aktivieren Sie Ihre Lizenz." });
             }
 
@@ -67,12 +66,11 @@ const loginController = {
                 id: user.id,
                 benutzername: user.benutzername,
                 userType,
-                licenseActive, // Lizenzstatus zum Payload hinzufügen
                 ...user // Alle anderen Benutzerinformationen hinzufügen
             };
 
             const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '24h' });
-            res.json({ token, userType, licenseActive }); // Lizenzstatus in der Antwort zurückgeben
+            res.json({ token, userType }); // Lizenzstatus nur für Lehrbetrieb notwendig
         } catch (error) {
             console.error("Fehler beim Login:", error);
             res.status(500).json({ error: "Fehler beim Login." });
