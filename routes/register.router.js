@@ -18,4 +18,7 @@ router.post('/lernender', registerController.authenticateToken, registerControll
 // Lizenz aktivieren (nur für Lehrbetriebe)
 router.post('/activate-license', registerController.activateLicense);
 
+// Lizenzstatus abfragen (nur für Lehrbetriebe)
+router.get('/get-license-status', registerController.authenticateToken, registerController.getLicenseStatus);
+
 module.exports = router;
