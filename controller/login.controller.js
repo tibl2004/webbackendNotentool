@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const pool = require('../database/index');
 
 const loginController = {
+    // Token-Authentifizierungsmiddleware
     authenticateToken: (req, res, next) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Extrahiere den Token
@@ -34,6 +35,7 @@ const loginController = {
             let user = null;
             let userType = null;
 
+            // Überprüfe, ob der Benutzer ein Admin, Berufsbildner, Lernender oder Lehrbetrieb ist
             if (admin.length > 0) {
                 user = admin[0];
                 userType = 'admin';
@@ -56,7 +58,7 @@ const loginController = {
                 return res.status(400).json({ error: "Benutzername oder Passwort falsch." });
             }
 
-            // Lizenzstatus nur für Lehrbetrieb überprüfen
+            // Lizenzstatus nur für Lehrbetriebe überprüfen
             if (userType === 'lehrbetrieb' && !user.licenseActive) {
                 return res.status(403).json({ error: "Lizenz nicht aktiviert. Bitte aktivieren Sie Ihre Lizenz." });
             }
@@ -69,8 +71,10 @@ const loginController = {
                 ...user // Alle anderen Benutzerinformationen hinzufügen
             };
 
+            // Token erstellen, gültig für 24 Stunden
             const token = jwt.sign(tokenPayload, 'secretKey', { expiresIn: '24h' });
-            res.json({ token, userType }); // Lizenzstatus nur für Lehrbetrieb notwendig
+            res.json({ token, userType }); // Erfolgreicher Login, gebe Token und Benutzerrolle zurück
+
         } catch (error) {
             console.error("Fehler beim Login:", error);
             res.status(500).json({ error: "Fehler beim Login." });
