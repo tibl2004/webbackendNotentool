@@ -136,18 +136,16 @@ const registerController = {
     },
 
     getLicenseStatus: async (req, res) => {
-        const { licenseCode } = req.body;
-    
+        const userId = req.user.id; // Wenn der Benutzer über den Token authentifiziert ist
+        
         try {
-            // Suche nach dem Lehrbetrieb mit dem angegebenen Lizenzcode
-            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE lizenz_code = ?", [licenseCode]);
+            const [lehrbetrieb] = await pool.query("SELECT * FROM lehrbetrieb WHERE id = ?", [userId]);
     
-            // Überprüfe, ob der Lehrbetrieb mit dem Lizenzcode existiert
             if (!lehrbetrieb || lehrbetrieb.length === 0) {
-                return res.status(404).json({ error: "Lehrbetrieb mit diesem Lizenzcode nicht gefunden." });
+                return res.status(404).json({ error: "Lehrbetrieb nicht gefunden." });
             }
     
-            // Gibt den aktuellen Status der Lizenz zurück
+            // Lizenzstatus zurückgeben
             const licenseStatus = lehrbetrieb[0].licenseActive;
             res.status(200).json({ licenseActive: licenseStatus });
         } catch (error) {
@@ -155,6 +153,7 @@ const registerController = {
             res.status(500).json({ error: "Fehler beim Abrufen des Lizenzstatus." });
         }
     },
+    
 };
 
 // Hilfsfunktion zur Generierung eines Lizenzcodes
