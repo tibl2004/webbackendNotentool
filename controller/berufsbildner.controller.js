@@ -1,20 +1,22 @@
+const jwt = require('jsonwebtoken');
 const pool = require('../database/index'); // Pool zur Datenbankverbindung
 
 const berufsbildnerController = {
-    // Authentifizierungstoken validieren
+    // Authentifizierungsmiddleware
     authenticateToken: (req, res, next) => {
-        const token = req.headers['authorization']?.split(' ')[1];
-        if (!token) return res.sendStatus(401);
-        // Token-Validierung hier implementieren...
-        next();
-    },
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
 
-    // Überprüfen, ob der Benutzer ein Berufsbildner ist
-    checkIfBerufsbildner: async (req, res, next) => {
-        // Überprüfung der Rolle des Benutzers in der Datenbank...
-        const isBerufsbildner = true; // Ersetze durch echte Logik
-        if (!isBerufsbildner) return res.sendStatus(403);
-        next();
+        if (!token) return res.status(401).json({ error: 'Kein Token bereitgestellt.' });
+
+        jwt.verify(token, 'secretKey', (err, user) => {
+            if (err) {
+                console.error('Token Überprüfung fehlgeschlagen:', err);
+                return res.status(403).json({ error: 'Ungültiger Token.' });
+            }
+            req.user = user;
+            next();
+        });
     },
 
     // Lernende abrufen, die diesem Berufsbildner zugeordnet sind
@@ -105,8 +107,8 @@ const berufsbildnerController = {
         }
     },
 
-      // Lernenden aktualisieren (Nur Lehrbetrieb oder Berufsbildner)
-      updateLernender: async (req, res) => {
+    // Lernenden aktualisieren (Nur Lehrbetrieb oder Berufsbildner)
+    updateLernender: async (req, res) => {
         const { lernenderId } = req.params;
         const { benutzername, name, vorname, beruf, berufsschule } = req.body;
 

@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const berufsbildnerController = require('../controller/berufsbildner.controller');
 
-// Authentifizierung und Rollenüberprüfung für alle Routen anwenden
+// Authentifizierung für alle Routen
 router.use(berufsbildnerController.authenticateToken);
-router.use(berufsbildnerController.checkIfBerufsbildner);
 
 // Lernende abrufen, die diesem Berufsbildner zugeordnet sind
 router.get('/lernende', berufsbildnerController.getLernende);
