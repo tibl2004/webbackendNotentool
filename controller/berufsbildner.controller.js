@@ -1,4 +1,4 @@
-const pool = require('../db'); // Stelle sicher, dass die Datenbankverbindung korrekt ist
+const pool = require('../database/index'); // Pool zur Datenbankverbindung
 
 const berufsbildnerController = {
     // Authentifizierungstoken validieren
